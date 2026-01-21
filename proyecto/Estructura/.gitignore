@@ -1,0 +1,17 @@
+# archivo con posible orden de borrado ya que no es seguro si utilizare github
+
+# Archivos de entorno (CONTRASEÑAS)
+.env
+
+
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+
+
+# Archivos de sistema
+.DS_Store
+
+

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantalla Terminal Coyhaique</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* 1. PALETA DE COLORES (Variables Globales) */
+        :root {
+            --color-fondo:    #ffffff; 
+            --color-rojo:     #E53935;   
+            --color-verde:    #4CAF50;  
+            --color-celeste:  #002b3f;  
+            --color-azul:     #002b3f;   
+            --color-amarillo: #ffffff;   
+        }
+
+        /* 2. ESTILOS GENERALES */
+        body { 
+            background-color: var(--color-fondo); 
+            color: white; 
+            font-family: 'Poppins', sans-serif; 
+            padding-bottom: 90px; 
+            overflow: hidden; 
+        }
+
+        /* ENCABEZADO SUPERIOR */
+        .header-top { 
+            background-color: var(--color-azul); 
+            padding: 15px; 
+            border-bottom: 4px solid var(--color-celeste); 
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.4);
+        }
+        
+        /* 3. ESTRUCTURA DE PANELES O CONTENEDORES */
+        .panel-tabla { 
+            background-color: #ffffff; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            height: 70vh;          
+            display: flex;         
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* 4. TABLAS (FORMATO Y FILAS) */
+        .table { 
+            --bs-table-bg: transparent; 
+            --bs-table-color: rgb(0, 0, 0); 
+            font-size: 1.8rem;    
+            margin-bottom: 0; 
+            width: 100%;
+        }
+
+        /* Encabezado de la tabla */
+        .table thead { 
+            background-color: #ffffff; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            border-bottom: 2px solid var(--color-celeste); 
+        }
+
+        /* Filas de recorrido de buses (Renglones) */
+        .table tbody tr { 
+            border-bottom: 1px solid #444; /* Borde por defecto (gris) */
+            height: 80px;          
+            vertical-align: middle; 
+            animation: fadeIn 0.6s ease-in-out;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 5. ANIMACIONES */
+        .fila-oculta { display: none; }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* 6. ANDENES (BADGES / NÚMEROS)*/
+        .badge-anden { 
+            font-size: 1.1em; 
+            width: 100%; 
+            display: block; 
+            padding: 10px; 
+            border-radius: 4px;
+        }
+        
+        /* ESTILOS ESPECÍFICOS (SALIDAS vs LLEGADAS)*/
+            
+        /* --- SALIDAS (ROJO) --- */
+        .borde-salidas { 
+            border: 2px solid var(--color-rojo); 
+        }
+
+        .bg-titulo-salidas { 
+            background-color: var(--color-rojo); 
+        }
+        .badge-salidas { 
+            background-color: var(--color-rojo) !important; 
+            color: white; 
+        }
+
+        /* --- LLEGADAS (VERDE) --- */
+        .borde-llegadas { 
+            border: 2px solid var(--color-verde); 
+        }
+        
+        .borde-llegadas .table tbody tr {
+            border-bottom: 1px solid var(--color-verde) !important;
+        }
+
+        .bg-titulo-llegadas { 
+            background-color: var(--color-verde); 
+        }
+        .badge-llegadas { 
+            background-color: var(--color-verde) !important; 
+            color: white; 
+        }
+
+        /* --- TEXTOS COLOREADOS --- */
+        .texto-amarillo { color: var(--color-amarillo); }
+        .texto-celeste  { color: var(--color-celeste); }
+
+        /* 8. BARRA DE MENSAJES (FOOTER)  */
+        .footer-anuncio {
+            background-color: var(--color-azul);
+            border-top: 4px solid var(--color-celeste);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-top d-flex justify-content-between align-items-center px-4">
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='LOGO.png') }}" width="100" class="me-4 rounded p-1">
+            
+            <div>
+                <h1 class="m-0 fw-bold text-uppercase">Bienvenidos al Terminal de Buses de Coyhaique</h1>
+                <p class="m-0 text-white fs-5" style="opacity: 0.9;">
+                    Programación del día: <span id="fecha-hoy" class="fw-bold texto-amarillo"></span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="text-end">
+            <h2 id="reloj" class="display-3 fw-bold texto-amarillo m-0" style="font-family: monospace;">00:00</h2>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4 px-4">
+        <div class="row">
+            
+            <div class="col-lg-6 mb-3">
+                <div class="panel-tabla borde-salidas">
+                    <div class="bg-titulo-salidas text-white p-2 text-center mb-2">
+                        <h2 class="m-0 fw-bold">📤 PRÓXIMAS SALIDAS</h2>
+                    </div>
+                    
+                    <table class="table table-dark align-middle">
+                        <thead>
+                            <tr class="texto-celeste">
+                                <th style="width: 15%">HORA</th>
+                                <th style="width: 35%">EMPRESA</th>
+                                <th style="width: 35%">DESTINO</th>
+                                <th style="width: 15%">ANDÉN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-salidas-body">
+                            {% for fila in salidas %}
+                            <tr>
+                                <td class="fw-bold texto-amarillo">{{ fila[0] }}</td>
+                                <td>{{ fila[1] }}</td>
+                                <td>{{ fila[2] }}</td>
+                                <td><span class="badge badge-salidas">{{ fila[3] }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted p-5">No hay salidas programadas para hoy.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-3">
+                <div class="panel-tabla borde-llegadas">
+                    <div class="bg-titulo-llegadas text-white p-2 text-center mb-2">
+                        <h2 class="m-0 fw-bold">📥 PRÓXIMAS LLEGADAS</h2>
+                    </div>
+                    
+                    <table class="table table-dark align-middle">
+                        <thead>
+                            <tr class="texto-celeste">
+                                <th style="width: 15%">HORA</th>
+                                <th style="width: 35%">EMPRESA</th>
+                                <th style="width: 35%">ORIGEN</th>
+                                <th style="width: 15%">ANDÉN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-llegadas-body">
+                            {% for fila in llegadas %}
+                            <tr>
+                                <td class="fw-bold texto-amarillo">{{ fila[0] }}</td>
+                                <td>{{ fila[1] }}</td>
+                                <td>{{ fila[2] }}</td>
+                                <td><span class="badge badge-llegadas">{{ fila[3] }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center text-muted p-5">No hay llegadas programadas para hoy.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="fixed-bottom footer-anuncio text-white text-center py-3">
+        <h3 id="texto-anuncio" class="m-0 fw-bold text-uppercase fs-4 texto-amarillo">
+            Cargando información...
+        </h3>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /* --- A. RELOJ EN TIEMPO REAL --- */
+        function actualizarReloj() {
+            const ahora = new Date();
+            const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('fecha-hoy').textContent = ahora.toLocaleDateString('es-ES', opcionesFecha);
+            document.getElementById('reloj').textContent = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        }
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+
+        /* --- B. PAGINACIÓN AUTOMÁTICA --- */
+        function iniciarPaginacion(idBody) {
+            const filas = document.querySelectorAll(`#${idBody} tr`);
+            const totalFilas = filas.length;
+            const filasPorPagina = 7; 
+            let indiceActual = 0;
+
+            if (totalFilas <= filasPorPagina) return; 
+
+            function mostrarBloque() {
+                filas.forEach(fila => fila.style.display = 'none');
+                let fin = indiceActual + filasPorPagina;
+                for (let i = indiceActual; i < fin; i++) {
+                    let indiceCircular = i % totalFilas;
+                    if (filas[indiceCircular]) {
+                        filas[indiceCircular].style.display = 'table-row';
+                    }
+                }
+                indiceActual += filasPorPagina;
+                if (indiceActual >= totalFilas) {
+                    indiceActual = 0;
+                }
+            }
+            mostrarBloque();
+            setInterval(mostrarBloque, 10000);
+        }
+
+        iniciarPaginacion('tabla-salidas-body');
+        iniciarPaginacion('tabla-llegadas-body');
+
+        /* --- C. ROTACIÓN DE NOTICIAS (CONECTADO A BASE DE DATOS) --- */
+        // La lista de noticias viene desde Flask
+        const anuncios = {{ noticias_db | tojson }}; // es "normal" que aparezca en rojo
+        
+        let indiceAnuncio = 0;
+        const elementoAnuncio = document.getElementById('texto-anuncio');
+
+        function rotarAnuncios() {
+            if (anuncios.length === 0) {
+                elementoAnuncio.textContent = ""; 
+                return;
+            }
+
+            elementoAnuncio.style.opacity = 0; 
+            setTimeout(() => {
+                elementoAnuncio.textContent = anuncios[indiceAnuncio];
+                elementoAnuncio.style.opacity = 1; 
+                indiceAnuncio = (indiceAnuncio + 1) % anuncios.length;
+            }, 500);
+        }
+        
+        elementoAnuncio.style.transition = "opacity 0.5s";
+        
+        // Ejecutar inmediatamente si hay noticias
+        if (anuncios.length > 0) {
+            rotarAnuncios();
+            setInterval(rotarAnuncios, 7000); 
+        } else {
+             // Fallback por seguridad visual
+             elementoAnuncio.textContent = "Bienvenido al Terminal de Coyhaique";
+        }
+
+        /* --- D. RECARGA AUTOMÁTICA (AUTO-REFRESH) --- */
+        // Configurado para refrescar cada 2 minutos (120000 ms)
+        setTimeout(() => {
+            window.location.reload();
+        }, 120000);
+
+    </script>
+</body>
+</html>

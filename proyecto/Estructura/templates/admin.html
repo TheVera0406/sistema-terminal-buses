@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Terminal</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --admin-fondo: #f4f6f9;
+            --admin-navbar: #a30280;
+            --admin-btn-primario: #0d6efd;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background-color: var(--admin-fondo); }
+        .navbar { background-color: var(--admin-navbar) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .nav-tabs .nav-link { color: #6c757d; font-weight: 500; border: none; padding: 1rem 1.5rem; }
+        .nav-tabs .nav-link.active { color: var(--admin-navbar); font-weight: 600; border-bottom: 3px solid var(--admin-navbar); background: none; }
+        .fecha-col { font-size: 0.85rem; color: #6c757d; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#">PANEL DE CONTROL DEL TERMINAL DE BUSES ⚙️ </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <a href="{{ url_for('inicio') }}" target="_blank" class="btn btn-dark btn-sm fw-bold">
+                <i class="bi bi-tv"></i> Ver Pantalla
+            </a>
+            <span class="navbar-text text-white me-2 d-none d-md-block small">| {{ current_user.username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Salir</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row mb-4 justify-content-center">
+        <div class="col-md-10 text-white">
+            <div class="card p-3 border-0 shadow-sm" style="background-color: #a30280">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-white" >Gestión de Recorridos</h5>
+                        <p class="text-white small mb-0">Administra la programación de buses</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+                            <i class="bi bi-plus-circle"></i> Nuevo Dato
+                        </button>
+                        
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalImportar">
+                            <i class="bi bi-file-earmark-excel"></i> Importar Excel
+                        </button>
+                        
+                        <button class="btn btn-warning fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#modalGestionNoticias">
+                            <i class="bi bi-megaphone-fill"></i> Noticias
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-3 mb-4 border-0 shadow-sm" style="background-color: #a30280;">
+        <form method="GET" action="{{ url_for('admin_bp.admin_panel') }}" class="row g-2 align-items-end">
+            <div class="col-md-2 col-6">
+                <label class="form-label small fw-bold text-white">Fecha</label>
+                <input type="date" name="fecha" class="form-control form-control-sm" value="{{ filtros.fecha }}">
+            </div>
+            <div class="col-md-2 col-6">
+                <label class="form-label small fw-bold text-white">Empresa</label>
+                <select name="empresa" class="form-select form-select-sm">
+                    <option value="">Todas</option>
+                    {% for emp in lista_empresas %}
+                    <option value="{{ emp }}" {% if filtros.empresa == emp %}selected{% endif %}>{{ emp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 col-6">
+                <label class="form-label small fw-bold text-white">Lugar</label>
+                <select name="lugar" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for lug in lista_lugares %}
+                    <option value="{{ lug }}" {% if filtros.lugar == lug %}selected{% endif %}>{{ lug }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1 col-6">
+                <label class="form-label small fw-bold text-white">Andén</label>
+                <input type="number" name="anden" class="form-control form-control-sm" value="{{ filtros.anden }}">
+            </div>
+            <div class="col-md-4 col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-dark btn-sm flex-grow-1">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{{ url_for('admin_bp.admin_panel') }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-x-circle"></i> Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card overflow-hidden mb-5 shadow-lg">
+        <div class="card-header bg-white p-0">
+            <ul class="nav nav-tabs border-0" id="adminTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="tab-salidas" data-bs-toggle="tab" data-bs-target="#pane-salidas" type="button">📤 SALIDAS</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="tab-llegadas" data-bs-toggle="tab" data-bs-target="#pane-llegadas" type="button">📥 LLEGADAS</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="tab-content">
+                
+                <div class="tab-pane fade show active" id="pane-salidas">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th><th>Hora</th><th>Empresa</th><th>Destino</th><th>Andén</th><th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bus in salidas %}
+                                <tr>
+                                    <td class="fecha-col">{{ bus[5] }}</td>
+                                    <td class="fw-bold text-danger">{{ bus[1] }}</td><td>{{ bus[2] }}</td><td>{{ bus[3] }}</td>
+                                    <td><span class="badge bg-secondary">{{ bus[4] }}</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar" 
+                                                data-id="{{ bus[0] }}" data-tipo="salida" data-fecha="{{ bus[5] }}" 
+                                                data-hora="{{ bus[1] }}" data-empresa="{{ bus[2] }}" 
+                                                data-lugar="{{ bus[3] }}" data-anden="{{ bus[4] }}">✏️</button>
+                                        <a href="{{ url_for('admin_bp.eliminar', tipo='salida', id=bus[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar?')">❌</a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="6" class="text-center py-5 text-muted">No hay salidas programadas.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="pane-llegadas">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th><th>Hora</th><th>Empresa</th><th>Origen</th><th>Andén</th><th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bus in llegadas %}
+                                <tr>
+                                    <td class="fecha-col">{{ bus[5] }}</td>
+                                    <td class="fw-bold text-success">{{ bus[1] }}</td><td>{{ bus[2] }}</td><td>{{ bus[3] }}</td>
+                                    <td><span class="badge bg-secondary">{{ bus[4] }}</span></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar" 
+                                                data-id="{{ bus[0] }}" data-tipo="llegada" data-fecha="{{ bus[5] }}" 
+                                                data-hora="{{ bus[1] }}" data-empresa="{{ bus[2] }}" 
+                                                data-lugar="{{ bus[3] }}" data-anden="{{ bus[4] }}">✏️</button>
+                                        <a href="{{ url_for('admin_bp.eliminar', tipo='llegada', id=bus[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar?')">❌</a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="6" class="text-center py-5 text-muted">No hay llegadas programadas.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        {% if total_paginas > 1 %}
+        <div class="card-footer bg-white border-top-0 py-3">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item {% if pagina_actual == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_bp.admin_panel', page=pagina_actual-1, **filtros) }}">Anterior</a>
+                    </li>
+                    <li class="page-item active"><span class="page-link">{{ pagina_actual }} de {{ total_paginas }}</span></li>
+                    <li class="page-item {% if pagina_actual == total_paginas %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_bp.admin_panel', page=pagina_actual+1, **filtros) }}">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevo" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('admin_bp.editar_registro') }}" method="POST" class="modal-content shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold">Nuevo Recorrido</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" value="0">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Tipo de Recorrido</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="salida">📤 Salida</option>
+                        <option value="llegada">📥 Llegada</option>
+                    </select>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6"><label class="form-label small fw-bold">Fecha</label><input type="date" name="fecha" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label small fw-bold">Hora</label><input type="time" name="hora" class="form-control" required></div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Empresa</label>
+                        <select name="empresa" class="form-select" required>
+                            {% for emp in lista_empresas %}
+                            <option value="{{ emp }}">{{ emp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-8">
+                        <label class="form-label small fw-bold">Ciudad</label>
+                        <select name="lugar" class="form-select" required>
+                            {% for lug in lista_lugares %}
+                            <option value="{{ lug }}">{{ lug }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-4"><label class="form-label small fw-bold">Andén</label><input type="number" name="anden" class="form-control" required></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-success w-100">Crear Recorrido</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalImportar" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('admin_bp.importar_excel') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+            <div class="modal-header"><h5 class="modal-title fw-bold">Subir Excel</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body"><input type="file" name="file" class="form-control" multiple required accept=".xlsx"></div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Procesar</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditar" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('admin_bp.editar_registro') }}" method="POST" class="modal-content shadow">
+            <div class="modal-header"><h5 class="modal-title fw-bold">Editar Registro</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" name="id" id="edit_id"><input type="hidden" name="tipo" id="edit_tipo">
+                <div class="row g-3">
+                    <div class="col-6"><label class="form-label small fw-bold">Fecha</label><input type="date" name="fecha" id="edit_fecha" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label small fw-bold">Hora</label><input type="time" name="hora" id="edit_hora" class="form-control" required></div>
+                    <div class="col-12">
+                        <label class="form-label small fw-bold">Empresa</label>
+                        <select name="empresa" id="edit_empresa" class="form-select" required>
+                            {% for emp in lista_empresas %}
+                            <option value="{{ emp }}">{{ emp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-8">
+                        <label class="form-label small fw-bold">Ciudad</label>
+                        <select name="lugar" id="edit_lugar" class="form-select" required>
+                            {% for lug in lista_lugares %}
+                            <option value="{{ lug }}">{{ lug }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-4"><label class="form-label small fw-bold">Andén</label><input type="number" name="anden" id="edit_anden" class="form-control" required></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-success w-100">Guardar Cambios</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalGestionNoticias" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold">Gestión de Noticias en Pantalla</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-2">Agregar Nueva Noticia</h6>
+                        <form action="{{ url_for('admin_bp.nueva_noticia') }}" method="POST" class="d-flex gap-2">
+                            <input type="text" name="contenido" class="form-control" placeholder="Escribe el mensaje aquí..." required>
+                            <button type="submit" class="btn btn-success fw-bold">Publicar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Noticias Activas ({{ lista_noticias|length }})</h6>
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 20%">Fecha</th>
+                                <th style="width: 70%">Mensaje</th>
+                                <th style="width: 10%" class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for n in lista_noticias %}
+                            <tr>
+                                <td class="small text-muted">{{ n[2].strftime('%d-%m %H:%M') if n[2] else '-' }}</td>
+                                <td>{{ n[1] }}</td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('admin_bp.eliminar_noticia', id=n[0]) }}" 
+                                       class="btn btn-sm btn-outline-danger border-0" 
+                                       onclick="return confirm('¿Borrar esta noticia permanentemente?')">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">
+                                    No hay noticias. Se muestra el saludo por defecto.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const modalEditar = document.getElementById('modalEditar');
+    modalEditar.addEventListener('show.bs.modal', function (event) {
+        const boton = event.relatedTarget;
+        document.getElementById('edit_id').value = boton.getAttribute('data-id');
+        document.getElementById('edit_tipo').value = boton.getAttribute('data-tipo');
+        document.getElementById('edit_fecha').value = boton.getAttribute('data-fecha');
+        document.getElementById('edit_hora').value = boton.getAttribute('data-hora');
+        document.getElementById('edit_empresa').value = boton.getAttribute('data-empresa');
+        document.getElementById('edit_lugar').value = boton.getAttribute('data-lugar');
+        document.getElementById('edit_anden').value = boton.getAttribute('data-anden');
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const activeTabId = localStorage.getItem('adminPanelTab');
+        if (activeTabId) {
+            const tabEl = document.getElementById(activeTabId);
+            if (tabEl) { new bootstrap.Tab(tabEl).show(); }
+        }
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(link => {
+            link.addEventListener('shown.bs.tab', e => localStorage.setItem('adminPanelTab', e.target.id));
+        });
+    });
+</script>
+</body>
+</html>
+

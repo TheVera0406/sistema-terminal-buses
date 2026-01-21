@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Consulta de Recorridos - Terminal</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --color-fondo: #f4f7f6;
+            --color-primario: #002b3f;
+            --color-llegadas: #198754;
+            --color-salidas: #dc3545;
+            --shadow-card: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        html, body { height: 100%; margin: 0; padding: 0; }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--color-fondo);
+            display: flex; flex-direction: column;
+        }
+
+        .main-content { flex: 1 0 auto; }
+
+        .navbar-mobile {
+            background-color: var(--color-primario);
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-pills-mobile {
+            background: white; padding: 5px; border-radius: 50px;
+            margin: 15px 0; box-shadow: var(--shadow-card); display: flex;
+        }
+        .nav-pills-mobile .nav-link {
+            flex: 1; border-radius: 50px; color: #666; font-weight: 500; text-align: center;
+        }
+        .nav-pills-mobile .nav-link.active.salida { background-color: var(--color-salidas); color: white; }
+        .nav-pills-mobile .nav-link.active.llegada { background-color: var(--color-llegadas); color: white; }
+
+        .bus-card {
+            background: white; border: none; border-radius: 12px;
+            margin-bottom: 12px; padding: 15px; box-shadow: var(--shadow-card);
+            border-left: 5px solid #ccc;
+        }
+        .bus-card.tipo-salida { border-left-color: var(--color-salidas); }
+        .bus-card.tipo-llegada { border-left-color: var(--color-llegadas); }
+
+        .bus-time { font-size: 1.4rem; font-weight: 700; color: var(--color-primario); line-height: 1; }
+        .bus-empresa { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; color: #444; }
+        .bus-lugar { font-size: 0.85rem; color: #666; }
+        
+        .anden-badge {
+            background-color: #f1f3f5; color: var(--color-primario);
+            padding: 5px 10px; border-radius: 8px; font-weight: 700;
+            min-width: 50px; text-align: center;
+        }
+        .anden-label { font-size: 0.6rem; text-transform: uppercase; color: #888; display: block; }
+
+        .mensaje-bienvenida {
+            background-color: #e3f2fd; color: var(--color-primario);
+            border-radius: 10px; padding: 15px; margin-top: 15px;
+            text-align: center; font-size: 0.9rem; border: 1px dashed #90caf9;
+        }
+
+        footer {
+            flex-shrink: 0; background-color: var(--color-primario);
+            color: white; padding: 40px 0 30px 0; margin-top: 40px;
+            border-top-left-radius: 20px; border-top-right-radius: 20px; text-align: center;
+        }
+
+        .fab-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        .btn-fab {
+            width: 60px; height: 60px; border-radius: 50%;
+            background-color: var(--color-primario); color: white;
+            border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+        }
+        .offcanvas-filters { border-top-left-radius: 20px; border-top-right-radius: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="main-content">
+        <nav class="navbar navbar-mobile sticky-top">
+            <div class="container d-flex justify-content-center">
+                <div class="d-flex align-items-center">
+                    <img src="{{ url_for('static', filename='LOGO.png') }}" width="40" class="me-2 rounded">
+                    <span class="fw-bold fs-5 text-white">TERMINAL COYHAIQUE</span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="mensaje-bienvenida">
+                <strong>¿Qué puedo hacer?</strong><br>
+                Usa el botón de la tuerca (⚙️) abajo a la derecha para filtrar por fecha, empresa o destino.
+            </div>
+
+            <div class="text-center mt-3 mb-2">
+                <small class="text-muted fw-bold text-uppercase">{{ titulo_estado }}</small>
+            </div>
+
+            <ul class="nav nav-pills nav-pills-mobile" id="pills-tab" role="tablist">
+                <li class="nav-item w-50">
+                    <button class="nav-link active salida" id="pills-salidas-tab" data-bs-toggle="pill" data-bs-target="#pills-salidas" type="button">📤 SALIDAS</button>
+                </li>
+                <li class="nav-item w-50">
+                    <button class="nav-link llegada" id="pills-llegadas-tab" data-bs-toggle="pill" data-bs-target="#pills-llegadas" type="button">📥 LLEGADAS</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="pills-salidas">
+                    {% for bus in salidas %}
+                    <div class="bus-card tipo-salida d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="bus-time">{{ bus[1].strftime('%H:%M') if bus[1] else '--:--' }}</span><br>
+                            <span class="bus-empresa">{{ bus[2] }}</span><br>
+                            <span class="bus-lugar">Hacia: <strong>{{ bus[3] }}</strong></span>
+                        </div>
+                        <div class="text-center">
+                            <span class="anden-label">ANDÉN</span>
+                            <div class="anden-badge">{{ bus[4] }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">No hay salidas programadas.</div>
+                    {% endfor %}
+                </div>
+
+                <div class="tab-pane fade" id="pills-llegadas">
+                    {% for bus in llegadas %}
+                    <div class="bus-card tipo-llegada d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="bus-time">{{ bus[1].strftime('%H:%M') if bus[1] else '--:--' }}</span><br>
+                            <span class="bus-empresa">{{ bus[2] }}</span><br>
+                            <span class="bus-lugar">Desde: <strong>{{ bus[3] }}</strong></span>
+                        </div>
+                        <div class="text-center">
+                            <span class="anden-label">ANDÉN</span>
+                            <div class="anden-badge">{{ bus[4] }}</div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">No hay llegadas programadas.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if total_paginas > 1 %}
+            <nav class="my-4 d-flex justify-content-center">
+                <ul class="pagination shadow-sm">
+                    <li class="page-item {% if pagina_actual == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('usuario_bp.dashboard', page=pagina_actual-1, fecha=filtros.fecha, empresa=filtros.empresa, lugar=filtros.lugar) }}">Anterior</a>
+                    </li>
+                    <li class="page-item disabled"><span class="page-link text-dark fw-bold">{{ pagina_actual }} / {{ total_paginas }}</span></li>
+                    <li class="page-item {% if pagina_actual == total_paginas %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('usuario_bp.dashboard', page=pagina_actual+1, fecha=filtros.fecha, empresa=filtros.empresa, lugar=filtros.lugar) }}">Siguiente</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="fab-container">
+        <button class="btn btn-fab" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFiltros">
+            <i class="bi bi-gear-fill"></i>
+        </button>
+    </div>
+
+    <div class="offcanvas offcanvas-bottom offcanvas-filters" tabindex="-1" id="offcanvasFiltros" style="height: 75vh;">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title fw-bold">🔍 Filtrar Recorridos</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            <form action="{{ url_for('usuario_bp.dashboard') }}" method="GET">
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">FECHA</label>
+                    <input type="date" name="fecha" class="form-control form-control-lg bg-light" value="{{ filtros.fecha }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">EMPRESA</label>
+                    <select name="empresa" class="form-select form-select-lg bg-light">
+                        <option value="">Todas las empresas</option>
+                        {% for emp in lista_empresas %}
+                            <option value="{{ emp }}" {% if filtros.empresa == emp %}selected{% endif %}>{{ emp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted">CIUDAD / DESTINO</label>
+                    <select name="lugar" class="form-select form-select-lg bg-light">
+                        <option value="">Todas las ciudades</option>
+                        {% for lug in lista_lugares %}
+                            <option value="{{ lug }}" {% if filtros.lugar == lug %}selected{% endif %}>{{ lug }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold" style="background-color: var(--color-primario);">BUSCAR</button>
+                    <a href="{{ url_for('usuario_bp.dashboard') }}" class="btn btn-outline-secondary">LIMPIAR FILTROS</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p class="mb-1">Terminal de Buses Coyhaique</p>
+            <div class="small opacity-50">&copy; 2026 Coyhaique, Región de Aysén</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Lógica para mantener la pestaña activa al recargar
+        document.addEventListener("DOMContentLoaded", function() {
+            const activeTabId = localStorage.getItem('userActiveTab');
+            if (activeTabId) {
+                const tabEl = document.getElementById(activeTabId);
+                if (tabEl) { new bootstrap.Tab(tabEl).show(); }
+            }
+            document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(button => {
+                button.addEventListener('shown.bs.tab', e => localStorage.setItem('userActiveTab', e.target.id));
+            });
+        });
+    </script>
+</body>
+</html>
