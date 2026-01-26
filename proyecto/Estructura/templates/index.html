@@ -7,134 +7,172 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     
     <style>
-        /* 1. PALETA DE COLORES (Variables Globales) */
+        /* 1. PALETA DE COLORES */
         :root {
-            --color-fondo:    #ffffff; 
+            --color-fondo:    #f4f6f9; 
             --color-rojo:     #E53935;   
-            --color-verde:    #4CAF50;  
+            --color-verde:    #2e7d32;  
             --color-celeste:  #002b3f;  
             --color-azul:     #002b3f;   
-            --color-amarillo: #ffffff;   
+            --color-blanco:   #ffffff;   
         }
 
         /* 2. ESTILOS GENERALES */
         body { 
             background-color: var(--color-fondo); 
-            color: white; 
+            color: #333; 
             font-family: 'Poppins', sans-serif; 
             padding-bottom: 90px; 
             overflow: hidden; 
         }
 
-        /* ENCABEZADO SUPERIOR */
         .header-top { 
             background-color: var(--color-azul); 
-            padding: 15px; 
-            border-bottom: 4px solid var(--color-celeste); 
-            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.4);
+            padding: 15px 30px; 
+            border-bottom: 5px solid var(--color-blanco); 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            color: white;
         }
-        
-        /* 3. ESTRUCTURA DE PANELES O CONTENEDORES */
-        .panel-tabla { 
-            background-color: #ffffff; 
-            border-radius: 8px; 
+
+        /* --- TABLAS (8 FILAS) --- */
+        .table-container {
+            height: 75vh; 
             overflow: hidden; 
-            height: 70vh;          
-            display: flex;         
-            flex-direction: column;
-            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.3);
+            padding: 0 10px; 
         }
-        
-        /* 4. TABLAS (FORMATO Y FILAS) */
-        .table { 
-            --bs-table-bg: transparent; 
-            --bs-table-color: rgb(0, 0, 0); 
-            font-size: 1.8rem;    
-            margin-bottom: 0; 
+
+        .table {
+            border-collapse: separate !important; 
+            border-spacing: 0 10px !important; 
+            margin-bottom: 0;
             width: 100%;
         }
 
-        /* Encabezado de la tabla */
-        .table thead { 
-            background-color: #ffffff; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            border-bottom: 2px solid var(--color-celeste); 
+        /* ENCABEZADOS DE TABLA */
+        .table thead th { 
+            background-color: transparent;
+            color: #000;          
+            text-transform: uppercase;
+            font-size: 1.1rem;
+            font-weight: 800;        
+            border-bottom: 4px solid #000; 
+            padding-bottom: 8px;
+            padding-left: 15px;
         }
 
-        /* Filas de recorrido de buses (Renglones) */
+        /* FILAS (TARJETAS) */
         .table tbody tr { 
-            border-bottom: 1px solid #444; /* Borde por defecto (gris) */
-            height: 80px;          
-            vertical-align: middle; 
-            animation: fadeIn 0.6s ease-in-out;
-            overflow: hidden;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08); 
+            transition: transform 0.2s;
+            border-radius: 12px; 
+            height: 70px;
+        }
+        
+        .table tbody tr td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .table tbody tr td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+        .table tbody td {
+            border: none; 
+            padding: 5px 15px;
+            vertical-align: middle;
+            line-height: 1.1;
+        }
+
+        /* --- JERARQUÍA DE FUENTES --- */
+        .celda-hora { 
+            font-weight: 800; 
+            font-size: 2.0rem;
+            color: #212529; 
+            letter-spacing: -1px;
+        }
+        
+        .celda-empresa { 
+            font-weight: 700; 
+            color: var(--color-azul); 
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            white-space: nowrap; 
+            overflow: hidden; 
             text-overflow: ellipsis;
+            max-width: 220px;
         }
         
-        /* 5. ANIMACIONES */
-        .fila-oculta { display: none; }
-
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(10px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-
-        /* 6. ANDENES (BADGES / NÚMEROS)*/
-        .badge-anden { 
-            font-size: 1.1em; 
-            width: 100%; 
-            display: block; 
-            padding: 10px; 
-            border-radius: 4px;
+        .celda-destino { 
+            font-weight: 800; 
+            color: #444; 
+            font-size: 1.4rem;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            max-width: 250px;
+            letter-spacing: -0.5px;
         }
         
-        /* ESTILOS ESPECÍFICOS (SALIDAS vs LLEGADAS)*/
-            
-        /* --- SALIDAS (ROJO) --- */
-        .borde-salidas { 
-            border: 2px solid var(--color-rojo); 
+        /* AQUÍ ESTÁ EL CAMBIO DE COLOR DEL ANDÉN */
+        .celda-anden { 
+            font-weight: 900; 
+            font-size: 2.8rem;
+            /* Eliminé el color rojo fijo de aquí */
+            display: block;
+            text-align: center;
+            line-height: 1;
         }
 
-        .bg-titulo-salidas { 
-            background-color: var(--color-rojo); 
-        }
-        .badge-salidas { 
-            background-color: var(--color-rojo) !important; 
-            color: white; 
-        }
+        /* Clases específicas para el color */
+        .anden-salida { color: var(--color-rojo); }   /* Rojo para salidas */
+        .anden-llegada { color: var(--color-verde); } /* Verde para llegadas */
 
-        /* --- LLEGADAS (VERDE) --- */
-        .borde-llegadas { 
-            border: 2px solid var(--color-verde); 
+        /* TÍTULOS CÁPSULA */
+        .titulo-capsula {
+            border-radius: 50px; 
+            padding: 10px 30px;
+            color: white;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 1.6rem;
+        }
+        .capsula-salida { background-color: var(--color-rojo); }
+        .capsula-llegada { background-color: var(--color-verde); }
+
+        /* ESTADOS */
+        .badge-estado {
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
         }
         
-        .borde-llegadas .table tbody tr {
-            border-bottom: 1px solid var(--color-verde) !important;
-        }
+        .est-anden { background-color: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; animation: parpadeo 1.5s infinite; }
+        .est-viaje { background-color: #e3f2fd; color: #1565c0; border: 2px solid #bbdefb; }
+        .est-demora { background-color: #fff3e0; color: #ef6c00; border: 2px solid #ffe0b2; }
+        .est-normal { color: #999; font-weight: 600; font-size: 0.8rem; }
 
-        .bg-titulo-llegadas { 
-            background-color: var(--color-verde); 
-        }
-        .badge-llegadas { 
-            background-color: var(--color-verde) !important; 
-            color: white; 
-        }
+        @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- TEXTOS COLOREADOS --- */
-        .texto-amarillo { color: var(--color-amarillo); }
-        .texto-celeste  { color: var(--color-celeste); }
-
-        /* 8. BARRA DE MENSAJES (FOOTER)  */
+        .texto-blanco { color: #ffffff; }
+        
         .footer-anuncio {
             background-color: var(--color-azul);
-            border-top: 4px solid var(--color-celeste);
+            border-top: 5px solid var(--color-blanco);
             z-index: 1000;
+            padding: 15px 0; 
         }
     </style>
 </head>
@@ -142,49 +180,59 @@
 
     <div class="header-top d-flex justify-content-between align-items-center px-4">
         <div class="d-flex align-items-center">
-            <img src="{{ url_for('static', filename='LOGO.png') }}" width="100" class="me-4 rounded p-1">
-            
+            <img src="{{ url_for('static', filename='LOGO.png') }}" width="110" class="me-4 rounded p-2">
             <div>
-                <h1 class="m-0 fw-bold text-uppercase">Bienvenidos al Terminal de Buses de Coyhaique</h1>
-                <p class="m-0 text-white fs-5" style="opacity: 0.9;">
-                    Programación del día: <span id="fecha-hoy" class="fw-bold texto-amarillo"></span>
+                <h1 class="m-0 fw-bold text-uppercase" style="font-size: 2.3rem;">Bienvenido al Terminal de Buses de Coyhaique</h1>
+                <p class="m-0 text-white" style="opacity: 1; font-size: 1.3rem;">
+                    Programacion del día: <span id="fecha-hoy" class="fw-bold texto-blanco"></span>
                 </p>
             </div>
         </div>
-        
         <div class="text-end">
-            <h2 id="reloj" class="display-3 fw-bold texto-amarillo m-0" style="font-family: monospace;">00:00</h2>
+            <h2 id="reloj" class="fw-bold texto-blanco m-0" style="font-family: monospace; font-size: 5.3rem; line-height: 0.9;">00:00</h2>
         </div>
     </div>
 
     <div class="container-fluid mt-4 px-4">
-        <div class="row">
+        <div class="row g-5"> 
             
             <div class="col-lg-6 mb-3">
-                <div class="panel-tabla borde-salidas">
-                    <div class="bg-titulo-salidas text-white p-2 text-center mb-2">
-                        <h2 class="m-0 fw-bold">📤 PRÓXIMAS SALIDAS</h2>
-                    </div>
-                    
-                    <table class="table table-dark align-middle">
+                <div class="titulo-capsula capsula-salida">
+                    <i class="bi bi-bus-front" style="font-size: 1.8rem;"></i> SALIDAS / DEPARTURES
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
                         <thead>
-                            <tr class="texto-celeste">
-                                <th style="width: 15%">HORA</th>
-                                <th style="width: 35%">EMPRESA</th>
-                                <th style="width: 35%">DESTINO</th>
-                                <th style="width: 15%">ANDÉN</th>
+                            <tr>
+                                <th style="width: 15%">HORA/TIME</th>
+                                <th style="width: 25%">EMPRESA/COMPANY</th>
+                                <th style="width: 30%">DESTINO/DESTINATION</th>
+                                <th style="width: 10%" class="text-center">ANDÉN/PLATFORM</th>
+                                <th style="width: 20%" class="text-center">ESTADO/STATE</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-salidas-body">
                             {% for fila in salidas %}
-                            <tr>
-                                <td class="fw-bold texto-amarillo">{{ fila[0] }}</td>
-                                <td>{{ fila[1] }}</td>
-                                <td>{{ fila[2] }}</td>
-                                <td><span class="badge badge-salidas">{{ fila[3] }}</span></td>
+                            <tr style="animation: fadeIn 0.4s ease-in-out;">
+                                <td class="celda-hora">{{ fila[1].strftime('%H:%M') }}</td>
+                                <td class="celda-empresa" title="{{ fila[2] }}">{{ fila[2] }}</td>
+                                <td class="celda-destino" title="{{ fila[3] }}">{{ fila[3] }}</td>
+                                <td><span class="celda-anden anden-salida">{{ fila[4] }}</span></td>
+                                <td class="text-center">
+                                    {% if fila[5] == 'En Andén' %}
+                                        <span class="badge-estado est-anden">En Andén</span>
+                                    {% elif fila[5] == 'En Recorrido' %}
+                                        <span class="badge-estado est-viaje">En Viaje</span>
+                                    {% elif fila[5] == 'Demorado' %}
+                                        <span class="badge-estado est-demora">Demorado</span>
+                                    {% else %}
+                                        <span class="est-normal">Programado</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="4" class="text-center text-muted p-5">No hay salidas programadas para hoy.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted p-5 fs-3">No hay salidas próximas.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -192,30 +240,42 @@
             </div>
 
             <div class="col-lg-6 mb-3">
-                <div class="panel-tabla borde-llegadas">
-                    <div class="bg-titulo-llegadas text-white p-2 text-center mb-2">
-                        <h2 class="m-0 fw-bold">📥 PRÓXIMAS LLEGADAS</h2>
-                    </div>
-                    
-                    <table class="table table-dark align-middle">
+                <div class="titulo-capsula capsula-llegada">
+                    <i class="bi bi-geo-alt-fill" style="font-size: 1.8rem;"></i> LLEGADAS / ARRIVALS
+                </div>
+                
+                <div class="table-container">
+                    <table class="table">
                         <thead>
-                            <tr class="texto-celeste">
-                                <th style="width: 15%">HORA</th>
-                                <th style="width: 35%">EMPRESA</th>
-                                <th style="width: 35%">ORIGEN</th>
-                                <th style="width: 15%">ANDÉN</th>
+                            <tr>
+                                <th style="width: 15%">HORA/TIME</th>
+                                <th style="width: 25%">EMPRESA/COMPANY</th>
+                                <th style="width: 30%">ORIGEN/ORIGIN</th>
+                                <th style="width: 10%" class="text-center">ANDÉN/PLATFORM</th>
+                                <th style="width: 20%" class="text-center">ESTADO/STATE</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-llegadas-body">
                             {% for fila in llegadas %}
-                            <tr>
-                                <td class="fw-bold texto-amarillo">{{ fila[0] }}</td>
-                                <td>{{ fila[1] }}</td>
-                                <td>{{ fila[2] }}</td>
-                                <td><span class="badge badge-llegadas">{{ fila[3] }}</span></td>
+                            <tr style="animation: fadeIn 0.4s ease-in-out;">
+                                <td class="celda-hora">{{ fila[1].strftime('%H:%M') }}</td>
+                                <td class="celda-empresa" title="{{ fila[2] }}">{{ fila[2] }}</td>
+                                <td class="celda-destino" title="{{ fila[3] }}">{{ fila[3] }}</td>
+                                <td><span class="celda-anden anden-llegada">{{ fila[4] }}</span></td>
+                                <td class="text-center">
+                                    {% if fila[5] == 'En Andén' %}
+                                        <span class="badge-estado est-anden">En Andén</span>
+                                    {% elif fila[5] == 'En Recorrido' %}
+                                        <span class="badge-estado est-viaje">En Viaje</span>
+                                    {% elif fila[5] == 'Demorado' %}
+                                        <span class="badge-estado est-demora">Demorado</span>
+                                    {% else %}
+                                        <span class="est-normal">Programado</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="4" class="text-center text-muted p-5">No hay llegadas programadas para hoy.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted p-5 fs-3">No hay llegadas próximas.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -225,16 +285,16 @@
         </div>
     </div>
 
-    <div class="fixed-bottom footer-anuncio text-white text-center py-3">
-        <h3 id="texto-anuncio" class="m-0 fw-bold text-uppercase fs-4 texto-amarillo">
-            Cargando información...
+    <div class="fixed-bottom footer-anuncio text-white text-center">
+        <h3 id="texto-anuncio" class="m-0 fw-bold text-uppercase texto-blanco" style="font-size: 1.8rem;">
+            Cargando...
         </h3>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        /* --- A. RELOJ EN TIEMPO REAL --- */
+        /* RELOJ */
         function actualizarReloj() {
             const ahora = new Date();
             const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -244,22 +304,25 @@
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
 
-        /* --- B. PAGINACIÓN AUTOMÁTICA --- */
+        /* PAGINACIÓN - 8 FILAS */
         function iniciarPaginacion(idBody) {
             const filas = document.querySelectorAll(`#${idBody} tr`);
             const totalFilas = filas.length;
-            const filasPorPagina = 7; 
+            const filasPorPagina = 8; 
             let indiceActual = 0;
 
-            if (totalFilas <= filasPorPagina) return; 
+            if (totalFilas <= filasPorPagina) {
+                filas.forEach(fila => fila.style.display = 'table-row');
+                return;
+            }
 
             function mostrarBloque() {
                 filas.forEach(fila => fila.style.display = 'none');
                 let fin = indiceActual + filasPorPagina;
+                
                 for (let i = indiceActual; i < fin; i++) {
-                    let indiceCircular = i % totalFilas;
-                    if (filas[indiceCircular]) {
-                        filas[indiceCircular].style.display = 'table-row';
+                    if (filas[i]) { 
+                        filas[i].style.display = 'table-row';
                     }
                 }
                 indiceActual += filasPorPagina;
@@ -268,25 +331,21 @@
                 }
             }
             mostrarBloque();
-            setInterval(mostrarBloque, 10000);
+            setInterval(mostrarBloque, 10000); 
         }
-
         iniciarPaginacion('tabla-salidas-body');
         iniciarPaginacion('tabla-llegadas-body');
 
-        /* --- C. ROTACIÓN DE NOTICIAS (CONECTADO A BASE DE DATOS) --- */
-        // La lista de noticias viene desde Flask
-        const anuncios = {{ noticias_db | tojson }}; // es "normal" que aparezca en rojo
-        
+        /* NOTICIAS */
+        const anuncios = {{ noticias_db | tojson }};
         let indiceAnuncio = 0;
         const elementoAnuncio = document.getElementById('texto-anuncio');
-
+        
         function rotarAnuncios() {
             if (anuncios.length === 0) {
-                elementoAnuncio.textContent = ""; 
+                elementoAnuncio.textContent = "Bienvenido al Terminal de Buses de Coyhaique"; 
                 return;
             }
-
             elementoAnuncio.style.opacity = 0; 
             setTimeout(() => {
                 elementoAnuncio.textContent = anuncios[indiceAnuncio];
@@ -294,24 +353,17 @@
                 indiceAnuncio = (indiceAnuncio + 1) % anuncios.length;
             }, 500);
         }
-        
         elementoAnuncio.style.transition = "opacity 0.5s";
         
-        // Ejecutar inmediatamente si hay noticias
         if (anuncios.length > 0) {
             rotarAnuncios();
-            setInterval(rotarAnuncios, 7000); 
+            setInterval(rotarAnuncios, 8000); 
         } else {
-             // Fallback por seguridad visual
-             elementoAnuncio.textContent = "Bienvenido al Terminal de Coyhaique";
+             elementoAnuncio.textContent = "Bienvenido al Terminal de Buses de Coyhaique";
         }
 
-        /* --- D. RECARGA AUTOMÁTICA (AUTO-REFRESH) --- */
-        // Configurado para refrescar cada 2 minutos (120000 ms)
-        setTimeout(() => {
-            window.location.reload();
-        }, 120000);
-
+        /* AUTO REFRESH */
+        setTimeout(() => { window.location.reload(); }, 180000); 
     </script>
 </body>
 </html>

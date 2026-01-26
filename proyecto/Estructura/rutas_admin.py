@@ -6,10 +6,9 @@ import math
 import os
 import shutil
 from werkzeug.utils import secure_filename
-
 from dotenv import load_dotenv
 
-# --- IMPORTACIÓN DE MÓDULOS PERSONALIZADOS ---
+# Módulos propios (Respetando tu estructura)
 from manipulacion_datos.generar_salidas_llegadas import ejecutar_procesamiento_excel
 from manipulacion_datos.insertar_datos import ejecutar_insercion_datos, obtener_id_empresa, obtener_id_lugar
 
@@ -30,17 +29,14 @@ def obtener_conexion_admin():
         print(f" Error DB Admin: {e}")
         return None
 
-# ==============================================================================
-# 1. PANEL PRINCIPAL (GESTIÓN DE RECORRIDOS Y NOTICIAS)
-# ==============================================================================
+# --- PANEL PRINCIPAL ---
 @admin_bp.route('/admin')
 @login_required
 def admin_panel():
     if current_user.rol != 'admin':
-        flash(' Acceso denegado.', 'danger')
+        flash('Acceso denegado.', 'danger')
         return redirect(url_for('inicio'))
 
-    # --- CAPTURAR FILTROS ---
     f_fecha = request.args.get('fecha', '')
     f_empresa = request.args.get('empresa', '')
     f_lugar = request.args.get('lugar', '')
@@ -57,18 +53,15 @@ def admin_panel():
     
     cur = conn.cursor()
 
-    # --- OBTENER LISTAS PARA SELECTS ---
     cur.execute("SELECT nombre FROM lugares ORDER BY nombre ASC")
     lista_lugares = [row[0] for row in cur.fetchall()]
     
     cur.execute("SELECT nombre FROM empresas ORDER BY nombre ASC")
     lista_empresas = [row[0] for row in cur.fetchall()]
 
-    # --- OBTENER NOTICIAS ---
     cur.execute("SELECT id, contenido, fecha_creacion FROM noticias ORDER BY id DESC")
     lista_noticias = cur.fetchall()
 
-    # --- CONSTRUCCIÓN DE SQL DINÁMICO PARA RECORRIDOS ---
     condiciones = ["1=1"]
     params = []
     
@@ -87,7 +80,7 @@ def admin_panel():
 
     where_clause = " AND ".join(condiciones)
 
-    # A. LLEGADAS
+    # Llegadas
     cur.execute(f"SELECT COUNT(*) FROM import_llegadas WHERE {where_clause}", params)
     total_llegadas = cur.fetchone()[0]
     cur.execute(f"""
@@ -98,7 +91,7 @@ def admin_panel():
     """, (*params, por_pagina, offset))
     llegadas = cur.fetchall()
 
-    # B. SALIDAS
+    # Salidas
     cur.execute(f"SELECT COUNT(*) FROM import_salidas WHERE {where_clause}", params)
     total_salidas = cur.fetchone()[0]
     cur.execute(f"""
@@ -125,10 +118,7 @@ def admin_panel():
                            lista_empresas=lista_empresas,
                            filtros=filtros)
 
-# ==============================================================================
-# 2. GESTIÓN DE NOTICIAS (NUEVO)
-# ==============================================================================
-
+# --- NOTICIAS ---
 @admin_bp.route('/admin/noticias/nueva', methods=['POST'])
 @login_required
 def nueva_noticia():
@@ -142,28 +132,23 @@ def nueva_noticia():
         conn.commit()
         cur.close()
         conn.close()
-        flash('✅ Noticia publicada correctamente.', 'success')
-    else:
-        flash('⚠️ El contenido de la noticia no puede estar vacío.', 'warning')
+        flash(' Noticia publicada correctamente.', 'success')
     return redirect(url_for('admin_bp.admin_panel'))
 
 @admin_bp.route('/admin/noticias/eliminar/<int:id>')
 @login_required
 def eliminar_noticia(id):
     if current_user.rol != 'admin': return redirect(url_for('inicio'))
-    
     conn = obtener_conexion_admin()
     cur = conn.cursor()
     cur.execute("DELETE FROM noticias WHERE id = %s", (id,))
     conn.commit()
     cur.close()
     conn.close()
-    flash('🗑️ Noticia eliminada.', 'info')
+    flash(' Noticia eliminada.', 'info')
     return redirect(url_for('admin_bp.admin_panel'))
 
-# ==============================================================================
-# 3. CREAR / EDITAR RECORRIDO
-# ==============================================================================
+# --- EDITAR ---
 @admin_bp.route('/admin/editar', methods=['POST'])
 @login_required
 def editar_registro():
@@ -171,49 +156,43 @@ def editar_registro():
 
     id_reg = request.form.get('id')
     tipo = request.form.get('tipo')
-    fecha = request.form.get('fecha')
-    hora = request.form.get('hora')
-    empresa = request.form.get('empresa')
-    lugar = request.form.get('lugar')
-    anden = request.form.get('anden')
-
+    
+    # Mapeo tipo a tabla
     tabla = 'import_llegadas' if tipo == 'llegada' else 'import_salidas'
     
     conn = obtener_conexion_admin()
     cur = conn.cursor()
 
     try:
-        # Aseguramos que la empresa y lugar existan en las tablas maestras
-        obtener_id_empresa(cur, empresa)
-        obtener_id_lugar(cur, lugar)
+        # Actualización de maestras (si es necesario)
+        obtener_id_empresa(cur, request.form.get('empresa'))
+        obtener_id_lugar(cur, request.form.get('lugar'))
 
         if id_reg == '0':  
             cur.execute(f"""
                 INSERT INTO {tabla} (lugar, hora, anden, empresa_nombre, fecha)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (lugar, hora, anden, empresa, fecha))
-            flash('✅ Recorrido creado exitosamente.', 'success')
+            """, (request.form.get('lugar'), request.form.get('hora'), request.form.get('anden'), request.form.get('empresa'), request.form.get('fecha')))
+            flash(' Recorrido creado exitosamente.', 'success')
         else:  
             cur.execute(f"""
                 UPDATE {tabla} 
                 SET fecha=%s, hora=%s, empresa_nombre=%s, lugar=%s, anden=%s
                 WHERE id=%s
-            """, (fecha, hora, empresa, lugar, anden, id_reg))
-            flash('✅ Recorrido actualizado.', 'success')
+            """, (request.form.get('fecha'), request.form.get('hora'), request.form.get('empresa'), request.form.get('lugar'), request.form.get('anden'), id_reg))
+            flash(' Recorrido actualizado.', 'success')
         
         conn.commit()
     except Exception as e:
         conn.rollback()
-        flash(f'❌ Error: {e}', 'danger')
+        flash(f' Error: {e}', 'danger')
     finally:
         cur.close()
         conn.close()
 
     return redirect(url_for('admin_bp.admin_panel'))
 
-# ==============================================================================
-# 4. ELIMINAR E IMPORTAR
-# ==============================================================================
+# --- ELIMINAR UNO SOLO ---
 @admin_bp.route('/admin/eliminar/<tipo>/<int:id>')
 @login_required
 def eliminar(tipo, id):
@@ -225,9 +204,10 @@ def eliminar(tipo, id):
     conn.commit()
     cur.close()
     conn.close()
-    flash('🗑️ Registro eliminado.', 'info')
+    flash(' Registro eliminado.', 'info')
     return redirect(url_for('admin_bp.admin_panel'))
 
+# --- IMPORTAR ---
 @admin_bp.route('/admin/importar', methods=['POST'])
 @login_required
 def importar_excel():
@@ -236,24 +216,23 @@ def importar_excel():
     carpeta_temp = os.path.join(os.getcwd(), 'temp_uploads')
     if not os.path.exists(carpeta_temp): os.makedirs(carpeta_temp)
     try:
-        archivos_guardados = False
+        guardados = False
         for archivo in archivos:
             if archivo.filename and archivo.filename.endswith('.xlsx'):
-                filename = secure_filename(archivo.filename)
-                archivo.save(os.path.join(carpeta_temp, filename))
-                archivos_guardados = True
+                archivo.save(os.path.join(carpeta_temp, secure_filename(archivo.filename)))
+                guardados = True
         
-        if archivos_guardados:
+        if guardados:
             exito_csv, msg_csv = ejecutar_procesamiento_excel(carpeta_temp)
             if exito_csv:
                 exito_db, msg_db = ejecutar_insercion_datos(carpeta_temp)
-                flash(f'🚀 {msg_db}', 'success') if exito_db else flash(f'❌ Error DB: {msg_db}', 'danger')
+                flash(f' {msg_db}', 'success') if exito_db else flash(f' Error DB: {msg_db}', 'danger')
             else:
-                flash(f'❌ Error CSV: {msg_csv}', 'danger')
+                flash(f' Error CSV: {msg_csv}', 'danger')
         else:
-            flash('⚠️ Seleccione archivos .xlsx válidos.', 'warning')
+            flash(' Seleccione archivos .xlsx válidos.', 'warning')
     except Exception as e:
-        flash(f'❌ Error Crítico: {str(e)}', 'danger')
+        flash(f' Error Crítico: {str(e)}', 'danger')
     finally:
         if os.path.exists(carpeta_temp): shutil.rmtree(carpeta_temp)
     return redirect(url_for('admin_bp.admin_panel'))
