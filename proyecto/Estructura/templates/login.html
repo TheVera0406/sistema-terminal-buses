@@ -29,63 +29,64 @@
             background-color: #002b3f; /* Tu color corporativo */
             color: white;
             text-align: center;
-            padding: 20px;
-            border-bottom: none;
+            padding: 2rem 1.5rem;
         }
         .btn-primary {
-            background-color: #E53935; /* Tu color rojo de identidad */
-            border: none;
-            padding: 10px;
-            font-weight: 600;
+            background-color: #002b3f;
+            border-color: #002b3f;
         }
         .btn-primary:hover {
-            background-color: #c62828;
-        }
-        .form-control:focus {
-            border-color: #002b3f;
-            box-shadow: 0 0 0 0.2rem rgba(0, 43, 63, 0.25);
+            background-color: #00405d;
+            border-color: #00405d;
         }
     </style>
 </head>
 <body>
 
-    <div class="card login-card">
-        <div class="card-header">
-            <h4 class="mb-0">🔐 Acceso Restringido</h4>
-            <small>Panel de Control Terminal</small>
-        </div>
-        <div class="card-body p-4">
+    <div class="container">
+        <div class="login-card mx-auto">
             
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+            <div class="card-header">
+                <img src="{{ url_for('static', filename='LOGO.png') }}" 
+                     alt="Logo Terminal" 
+                     width="100" 
+                     class="img-fluid rounded mb-3">
 
-            <form action="/login" method="POST">
-                <div class="mb-3">
-                    <label for="username" class="form-label text-muted">Usuario</label>
-                    <input type="text" class="form-control" id="username" name="username" required autofocus placeholder="Ej: admin">
-                </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label text-muted">Contraseña</label>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
-                </div>
+                <h4 class="fw-bold mb-1">Acceso Restringido</h4>
+                <small class="d-block" style="opacity: 0.8;">Por favor, inicie sesión para ingresar.</small>
+            </div>
+
+            <div class="card-body p-4 bg-white">
                 
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">Ingresar al Sistema</button>
-                    <a href="/" class="btn btn-outline-secondary btn-sm mt-2">← Volver a Pantalla Pública</a>
-                </div>
-            </form>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form action="/login" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label text-muted small fw-bold">USUARIO</label>
+                        <input type="text" class="form-control" id="username" name="username" required autofocus placeholder="Ej: admin">
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label text-muted small fw-bold">CONTRASEÑA</label>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">INGRESAR</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

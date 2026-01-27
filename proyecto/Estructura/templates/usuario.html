@@ -71,7 +71,7 @@
 
         footer {
             flex-shrink: 0; background-color: var(--color-primario);
-            color: white; padding: 40px 0 30px 0; margin-top: 40px;
+            color: white; padding: 40px 0 20px 0; margin-top: 40px;
             border-top-left-radius: 20px; border-top-right-radius: 20px; text-align: center;
         }
 
@@ -92,15 +92,15 @@
             <div class="container d-flex justify-content-center">
                 <div class="d-flex align-items-center">
                     <img src="{{ url_for('static', filename='LOGO.png') }}" width="40" class="me-2 rounded">
-                    <span class="fw-bold fs-5 text-white">TERMINAL COYHAIQUE</span>
+                    <span class="fw-bold fs-5 text-white">TERMINAL DE COYHAIQUE</span>
                 </div>
             </div>
         </nav>
 
         <div class="container">
             <div class="mensaje-bienvenida">
-                <strong>¿Qué puedo hacer?</strong><br>
-                Usa el botón de la tuerca (⚙️) abajo a la derecha para filtrar por fecha, empresa o destino.
+                <strong>¿Buscas un viaje?</strong><br>
+                Presiona el botón (⚙️) para filtrar por fecha, empresa o destino.
             </div>
 
             <div class="text-center mt-3 mb-2">
@@ -119,15 +119,27 @@
             <div class="tab-content" id="pills-tabContent">
                 <div class="tab-pane fade show active" id="pills-salidas">
                     {% for bus in salidas %}
+                    {% set estado = bus[6] %}
                     <div class="bus-card tipo-salida d-flex justify-content-between align-items-center">
                         <div>
                             <span class="bus-time">{{ bus[1].strftime('%H:%M') if bus[1] else '--:--' }}</span><br>
                             <span class="bus-empresa">{{ bus[2] }}</span><br>
                             <span class="bus-lugar">Hacia: <strong>{{ bus[3] }}</strong></span>
                         </div>
-                        <div class="text-center">
-                            <span class="anden-label">ANDÉN</span>
-                            <div class="anden-badge">{{ bus[4] }}</div>
+                        <div class="text-center d-flex flex-column align-items-end">
+                            
+                            <span class="badge mb-2 
+                                {% if estado == 'En Andén' %}bg-success
+                                {% elif estado == 'En Recorrido' %}bg-primary
+                                {% elif estado == 'Demorado' %}bg-warning text-dark
+                                {% else %}bg-secondary{% endif %}">
+                                {{ estado if estado else 'Programado' }}
+                            </span>
+
+                            <div class="text-center">
+                                <span class="anden-label">ANDÉN</span>
+                                <div class="anden-badge">{{ bus[4] }}</div>
+                            </div>
                         </div>
                     </div>
                     {% else %}
@@ -137,15 +149,27 @@
 
                 <div class="tab-pane fade" id="pills-llegadas">
                     {% for bus in llegadas %}
+                    {% set estado = bus[6] %}
                     <div class="bus-card tipo-llegada d-flex justify-content-between align-items-center">
                         <div>
                             <span class="bus-time">{{ bus[1].strftime('%H:%M') if bus[1] else '--:--' }}</span><br>
                             <span class="bus-empresa">{{ bus[2] }}</span><br>
                             <span class="bus-lugar">Desde: <strong>{{ bus[3] }}</strong></span>
                         </div>
-                        <div class="text-center">
-                            <span class="anden-label">ANDÉN</span>
-                            <div class="anden-badge">{{ bus[4] }}</div>
+                        <div class="text-center d-flex flex-column align-items-end">
+                            
+                            <span class="badge mb-2 
+                                {% if estado == 'En Andén' %}bg-success
+                                {% elif estado == 'En Recorrido' %}bg-primary
+                                {% elif estado == 'Demorado' %}bg-warning text-dark
+                                {% else %}bg-secondary{% endif %}">
+                                {{ estado if estado else 'Programado' }}
+                            </span>
+
+                            <div class="text-center">
+                                <span class="anden-label">ANDÉN</span>
+                                <div class="anden-badge">{{ bus[4] }}</div>
+                            </div>
                         </div>
                     </div>
                     {% else %}
@@ -219,14 +243,41 @@
 
     <footer>
         <div class="container">
-            <p class="mb-1">Terminal de Buses Coyhaique</p>
-            <div class="small opacity-50">&copy; 2026 Coyhaique, Región de Aysén</div>
+            <div class="row gy-4 mb-4">
+                
+                <div class="col-md-4">
+                    <div class="mb-1">
+                        <i class="bi bi-geo-alt-fill text-info fs-5"></i> 
+                        <span class="fw-bold ms-1 text-info" style="font-size: 1rem;">DIRECCIÓN</span>
+                    </div>
+                    <div style="font-size: 0.95rem;">Calle Lautaro 109, Coyhaique</div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-1">
+                        <i class="bi bi-telephone-fill text-info fs-5"></i> 
+                        <span class="fw-bold ms-1 text-info" style="font-size: 1rem;">CONTACTO</span>
+                    </div>
+                    <div style="font-size: 0.95rem;">+56 9 1234 5678</div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-1">
+                        <i class="bi bi-envelope-fill text-info fs-5"></i> 
+                        <span class="fw-bold ms-1 text-info" style="font-size: 1rem;">EMAIL</span>
+                    </div>
+                    <div style="font-size: 0.95rem;">contacto@terminalcoyhaique.cl</div>
+                </div>
+
+            </div>
+
+            <hr class="border-white opacity-25">
+            <div class="small opacity-50">&copy; 2026 Terminal de Buses Coyhaique</div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Lógica para mantener la pestaña activa al recargar
         document.addEventListener("DOMContentLoaded", function() {
             const activeTabId = localStorage.getItem('userActiveTab');
             if (activeTabId) {

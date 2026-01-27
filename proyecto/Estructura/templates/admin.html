@@ -14,7 +14,7 @@
     <style>
         :root {
             --admin-fondo: #f4f6f9;
-            --admin-navbar: #a30280; /* Tu color morado */
+            --admin-navbar: #002b3f; /* Tu color morado */
             --admin-btn-primario: #0d6efd;
         }
 
@@ -30,11 +30,17 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark mb-4">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="#">PANEL DE CONTROL DEL TERMINAL DE BUSES ⚙️ </a>
+        <a class="navbar-brand" href="#">PANEL DE ADMINISTRADOR</a>
+        
         <div class="ms-auto d-flex align-items-center gap-2">
-            <a href="{{ url_for('inicio') }}" target="_blank" class="btn btn-dark btn-sm fw-bold">
+            <a href="{{ url_for('inicio') }}" target="_blank" class="btn btn-dark btn-sm">
                 <i class="bi bi-tv"></i> Ver Pantalla
             </a>
+
+            <a href="{{ url_for('operador_bp.panel_operador') }}" class="btn btn-dark btn-sm text-white">
+                <i class="bi bi-person-badge-fill"></i> Panel Operador
+            </a>
+
             <span class="navbar-text text-white me-2 d-none d-md-block small">| {{ current_user.username }}</span>
             <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Salir</a>
         </div>
@@ -55,7 +61,7 @@
 
     <div class="row mb-4 justify-content-center">
         <div class="col-md-10 text-white">
-            <div class="card p-3 border-0 shadow-sm" style="background-color: #a30280">
+            <div class="card p-3 border-0 shadow-sm" style="background-color: #002b3f">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
                         <h5 class="fw-bold mb-0 text-white" >Gestión de Recorridos</h5>
@@ -70,7 +76,7 @@
                             <i class="bi bi-file-earmark-excel"></i> Importar Excel
                         </button>
                         
-                        <button class="btn btn-warning fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#modalGestionNoticias">
+                        <button class="btn btn-warning text-white" data-bs-toggle="modal" data-bs-target="#modalGestionNoticias">
                             <i class="bi bi-megaphone-fill"></i> Noticias
                         </button>
                     </div>
@@ -79,12 +85,19 @@
         </div>
     </div>
 
-    <div class="card p-3 mb-4 border-0 shadow-sm" style="background-color: #a30280;">
+    <div class="card p-3 mb-4 border-0 shadow-sm" style="background-color: #002b3f;">
         <form method="GET" action="{{ url_for('admin_bp.admin_panel') }}" class="row g-2 align-items-end">
             <div class="col-md-2 col-6">
                 <label class="form-label small fw-bold text-white">Fecha</label>
                 <input type="date" name="fecha" class="form-control form-control-sm" value="{{ filtros.fecha }}">
             </div>
+            
+            <div class="col-md-1 col-6">
+                <label class="form-label small fw-bold text-white">Hora</label>
+                <input type="text" name="hora" id="filtroHoraAdmin" class="form-control form-control-sm text-center" 
+                       value="{{ filtros.hora }}" placeholder="00:00" maxlength="5">
+            </div>
+
             <div class="col-md-2 col-6">
                 <label class="form-label small fw-bold text-white">Empresa</label>
                 <select name="empresa" class="form-select form-select-sm">
@@ -105,13 +118,14 @@
             </div>
             <div class="col-md-1 col-6">
                 <label class="form-label small fw-bold text-white">Andén</label>
-                <input type="number" name="anden" class="form-control form-control-sm" value="{{ filtros.anden }}">
+                <input type="number" name="anden" class="form-control form-control-sm text-center" value="{{ filtros.anden }}" placeholder="#">
             </div>
-            <div class="col-md-4 col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-dark btn-sm flex-grow-1">
+            
+            <div class="col-md-3 col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-secondary btn-sm flex-grow-1 text-white">
                     <i class="bi bi-search"></i> Filtrar
                 </button>
-                <a href="{{ url_for('admin_bp.admin_panel') }}" class="btn btn-secondary btn-sm">
+                <a href="{{ url_for('admin_bp.admin_panel') }}" class="btn btn-secondary btn-sm text-white">
                     <i class="bi bi-x-circle"></i> Limpiar
                 </a>
             </div>
@@ -153,12 +167,19 @@
                                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar" 
                                                 data-id="{{ bus[0] }}" data-tipo="salida" data-fecha="{{ bus[5] }}" 
                                                 data-hora="{{ bus[1] }}" data-empresa="{{ bus[2] }}" 
-                                                data-lugar="{{ bus[3] }}" data-anden="{{ bus[4] }}">✏️</button>
-                                        <a href="{{ url_for('admin_bp.eliminar', tipo='salida', id=bus[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar?')">❌</a>
+                                                data-lugar="{{ bus[3] }}" data-anden="{{ bus[4] }}">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        
+                                        <a href="{{ url_for('admin_bp.eliminar', tipo='salida', id=bus[0]) }}" 
+                                           class="btn btn-sm btn-outline-danger" 
+                                           onclick="return confirm('¿Eliminar?')">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </a>
                                     </td>
                                 </tr>
                                 {% else %}
-                                <tr><td colspan="6" class="text-center py-5 text-muted">No hay salidas programadas.</td></tr>
+                                <tr><td colspan="6" class="text-center py-5 text-muted">No hay salidas programadas para esta fecha y filtros.</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -185,12 +206,19 @@
                                         <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditar" 
                                                 data-id="{{ bus[0] }}" data-tipo="llegada" data-fecha="{{ bus[5] }}" 
                                                 data-hora="{{ bus[1] }}" data-empresa="{{ bus[2] }}" 
-                                                data-lugar="{{ bus[3] }}" data-anden="{{ bus[4] }}">✏️</button>
-                                        <a href="{{ url_for('admin_bp.eliminar', tipo='llegada', id=bus[0]) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar?')">❌</a>
+                                                data-lugar="{{ bus[3] }}" data-anden="{{ bus[4] }}">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+
+                                        <a href="{{ url_for('admin_bp.eliminar', tipo='llegada', id=bus[0]) }}" 
+                                           class="btn btn-sm btn-outline-danger" 
+                                           onclick="return confirm('¿Eliminar?')">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </a>
                                     </td>
                                 </tr>
                                 {% else %}
-                                <tr><td colspan="6" class="text-center py-5 text-muted">No hay llegadas programadas.</td></tr>
+                                <tr><td colspan="6" class="text-center py-5 text-muted">No hay llegadas programadas para esta fecha y filtros.</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -317,7 +345,7 @@
                     <div class="card-body">
                         <h6 class="fw-bold mb-2">Agregar Nueva Noticia</h6>
                         <form action="{{ url_for('admin_bp.nueva_noticia') }}" method="POST" class="d-flex gap-2">
-                            <input type="text" name="contenido" class="form-control" placeholder="Escribe el mensaje aquí..." required>
+                            <input type="text" name="texto_noticia" class="form-control" placeholder="Escribe el mensaje aquí..." required>
                             <button type="submit" class="btn btn-success fw-bold">Publicar</button>
                         </form>
                     </div>
@@ -388,6 +416,15 @@
         document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(link => {
             link.addEventListener('shown.bs.tab', e => localStorage.setItem('adminPanelTab', e.target.id));
         });
+        
+        // --- SCRIPT DE MÁSCARA PARA LA HORA ---
+        const inputHora = document.getElementById('filtroHoraAdmin');
+        if (inputHora) {
+            inputHora.addEventListener('input', function (e) {
+                var x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,2})/);
+                e.target.value = !x[2] ? x[1] : x[1] + ':' + x[2];
+            });
+        }
     });
 </script>
 </body>

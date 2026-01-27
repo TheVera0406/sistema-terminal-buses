@@ -15,7 +15,6 @@ def conectar_db():
     )
 
 def obtener_id_empresa(cursor, nombre_empresa):
-    """Verifica si la empresa existe, si no, la crea y retorna el ID."""
     cursor.execute("SELECT id FROM empresas WHERE nombre = %s;", (nombre_empresa,))
     resultado = cursor.fetchone()
     if resultado: 
@@ -25,7 +24,6 @@ def obtener_id_empresa(cursor, nombre_empresa):
         return cursor.fetchone()[0]
 
 def obtener_id_lugar(cursor, nombre_lugar):
-    """Verifica si el lugar existe, si no, lo crea y retorna el ID (Lógica Espejo)."""
     if not nombre_lugar: return None
     cursor.execute("SELECT id FROM lugares WHERE nombre = %s;", (nombre_lugar,))
     resultado = cursor.fetchone()
@@ -36,47 +34,74 @@ def obtener_id_lugar(cursor, nombre_lugar):
         return cursor.fetchone()[0]
 
 def insertar_csv_en_tabla(conn, archivo_csv, tabla):
-    if not os.path.exists(archivo_csv): return 0
+    if not os.path.exists(archivo_csv): 
+        return 0, 0 # Insertados, Duplicados
 
-    df = pd.read_csv(archivo_csv, sep=';')
+    try:
+        df = pd.read_csv(archivo_csv, sep=';')
+    except:
+        return 0, 0
+
+    if df.empty: return 0, 0
+
     cur = conn.cursor()
-    contador = 0
+    insertados = 0
+    total_filas = len(df)
 
-    # SQL con parámetros seguros para evitar inyección y errores de formato
+    # --- CAMBIO IMPORTANTE AQUÍ ---
+    # Agregamos la columna 'estado' y le forzamos el valor 'Programado'
     sql = f"""
-        INSERT INTO {tabla} (lugar, hora, anden, empresa_nombre, fecha)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO {tabla} (lugar, hora, anden, empresa_nombre, fecha, estado)
+        VALUES (%s, %s, %s, %s, %s, 'Programado')
         ON CONFLICT (fecha, hora, empresa_nombre, lugar) DO NOTHING
     """
 
     for _, row in df.iterrows():
-        # 1. Poblado automático de tablas maestras (Empresas y Lugares)
         obtener_id_empresa(cur, row['empresa'])
         obtener_id_lugar(cur, row['lugar'])
         
-        # 2. Inserción del registro de viaje
         cur.execute(sql, (row['lugar'], row['hora'], row['anden'], row['empresa'], row['fecha']))
+        
         if cur.rowcount > 0: 
-            contador += 1
+            insertados += 1
 
     conn.commit()
     cur.close()
-    return contador
+    
+    duplicados = total_filas - insertados
+    return insertados, duplicados
 
-# --- FUNCIÓN PRINCIPAL LLAMADA DESDE FLASK ---
 def ejecutar_insercion_datos(carpeta_uploads):
     conn = conectar_db()
-    if not conn: return False, "Error conectando a BD."
+    if not conn: return False, ["Error crítico conectando a BD."]
 
     ruta_llegadas = os.path.join(carpeta_uploads, 'llegadas_limpio.csv')
     ruta_salidas = os.path.join(carpeta_uploads, 'salidas_limpio.csv')
 
+    mensajes = []
+    
     try:
-        cont_llegadas = insertar_csv_en_tabla(conn, ruta_llegadas, 'import_llegadas')
-        cont_salidas = insertar_csv_en_tabla(conn, ruta_salidas, 'import_salidas')
+        ins_llegadas, dup_llegadas = insertar_csv_en_tabla(conn, ruta_llegadas, 'import_llegadas')
+        ins_salidas, dup_salidas = insertar_csv_en_tabla(conn, ruta_salidas, 'import_salidas')
         
         conn.close()
-        return True, f"Se insertaron {cont_llegadas} llegadas y {cont_salidas} salidas correctamente."
+        
+        # Mensajes sin emojis (según tu configuración anterior)
+        if ins_llegadas > 0:
+            mensajes.append(f"Éxito: {ins_llegadas} nuevas llegadas insertadas.")
+        if dup_llegadas > 0:
+            mensajes.append(f"Advertencia: {dup_llegadas} llegadas duplicadas omitidas.")
+            
+        if ins_salidas > 0:
+            mensajes.append(f"Éxito: {ins_salidas} nuevas salidas insertadas.")
+        if dup_salidas > 0:
+            mensajes.append(f"Advertencia: {dup_salidas} salidas duplicadas omitidas.")
+
+        if ins_llegadas == 0 and ins_salidas == 0 and dup_llegadas == 0 and dup_salidas == 0:
+             return False, ["No se encontraron datos válidos para insertar."]
+
+        return True, mensajes
+
     except Exception as e:
         if conn: conn.close()
-        return False, f"Error en inserción: {str(e)}"
+        return False, [f"Error base de datos: {str(e)}"]

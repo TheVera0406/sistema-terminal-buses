@@ -59,23 +59,36 @@ def encontrar_encabezado(df):
     return 0
 
 def procesar_excel(tipo, carpeta_uploads):
-    # Buscamos en la carpeta específica de uploads
-    archivos = [f for f in os.listdir(carpeta_uploads) if f.endswith('.xlsx') and tipo in f.upper() and "~$" not in f]
+    archivos = [f for f in os.listdir(carpeta_uploads) if f.endswith('.xlsx') and "~$" not in f]
     
-    if not archivos: return pd.DataFrame(), True
-
     dfs = []
+    reporte_errores = [] 
+    archivos_procesados = 0
+
     for archivo in archivos:
+        if tipo not in archivo.upper():
+            continue 
+
         ruta_completa = os.path.join(carpeta_uploads, archivo)
+        archivos_procesados += 1
+
         try:
             xls = pd.read_excel(ruta_completa, sheet_name=None)
         except Exception as e:
-            return pd.DataFrame(), False
+            # --- CAMBIO: Sin emojis ---
+            reporte_errores.append(f"Error al leer '{archivo}': Formato inválido.")
+            continue
 
         for nombre_hoja, df_raw in xls.items():
             dia = extraer_dia_de_hoja(nombre_hoja)
             mes, anio = buscar_mes_y_anio_en_filas(df_raw)
-            if dia is None or mes is None or anio is None: return pd.DataFrame(), False
+            
+            if dia is None: continue 
+            
+            if mes is None or anio is None:
+                # --- CAMBIO: Sin emojis ---
+                reporte_errores.append(f"Advertencia: Archivo '{archivo}' Hoja '{nombre_hoja}': No se detectó MES o AÑO.")
+                continue
             
             skip = encontrar_encabezado(df_raw)
             df = df_raw.iloc[skip:].copy()
@@ -88,20 +101,28 @@ def procesar_excel(tipo, carpeta_uploads):
                 if c in df.columns:
                     cols_map[c] = 'hora'
                     break
+            
             if 'DESDE' in df.columns: cols_map['DESDE'] = 'lugar'
             elif 'DESTINO' in df.columns: cols_map['DESTINO'] = 'lugar'
             elif 'ORIGEN' in df.columns: cols_map['ORIGEN'] = 'lugar'
+            
             if 'ANDEN' in df.columns: cols_map['ANDEN'] = 'anden'
+            
             if 'OPERADOR' in df.columns: cols_map['OPERADOR'] = 'empresa'
             elif 'EMPRESA' in df.columns: cols_map['EMPRESA'] = 'empresa'
+
+            if 'hora' not in cols_map.values():
+                continue 
 
             cols_existentes = {k: v for k, v in cols_map.items() if k in df.columns}
             df = df[list(cols_existentes.keys())].rename(columns=cols_existentes)
             df['fecha'] = f"{anio}-{mes:02d}-{dia:02d}"
             dfs.append(df)
 
-    if dfs: return pd.concat(dfs, ignore_index=True), True
-    return pd.DataFrame(), True
+    if not dfs:
+        return pd.DataFrame(), reporte_errores
+
+    return pd.concat(dfs, ignore_index=True), reporte_errores
 
 def guardar_csv(df, ruta_salida):
     if df.empty: return False
@@ -119,30 +140,22 @@ def guardar_csv(df, ruta_salida):
     df[cols].to_csv(ruta_salida, index=False, sep=';', encoding='utf-8')
     return True
 
-# --- FUNCIÓN PRINCIPAL LLAMADA DESDE FLASK ---
 def ejecutar_procesamiento_excel(carpeta_uploads):
-    df_llegadas, ok_llegadas = procesar_excel('LLEGADAS', carpeta_uploads)
-    df_salidas, ok_salidas = procesar_excel('SALIDAS', carpeta_uploads)
+    df_llegadas, errores_llegadas = procesar_excel('LLEGADAS', carpeta_uploads)
+    df_salidas, errores_salidas = procesar_excel('SALIDAS', carpeta_uploads)
 
     ruta_llegadas = os.path.join(carpeta_uploads, 'llegadas_limpio.csv')
     ruta_salidas = os.path.join(carpeta_uploads, 'salidas_limpio.csv')
 
-    if ok_llegadas and ok_salidas:
+    mensajes = errores_llegadas + errores_salidas
+    exito_total = False
+
+    if not df_llegadas.empty:
         guardar_csv(df_llegadas, ruta_llegadas)
+        exito_total = True
+    
+    if not df_salidas.empty:
         guardar_csv(df_salidas, ruta_salidas)
-        return True, "CSVs generados correctamente."
-    else:
-        return False, "Error procesando los Excel. Verifique el formato."
-    
-# if __name__ == "__main__":
-    # Define la carpeta donde están tus archivos Excel
-    mi_carpeta = "uploads" 
-    
-    # Crea la carpeta si no existe
-    if not os.path.exists(mi_carpeta):
-        os.makedirs(mi_carpeta)
-        print(f"Por favor, coloca los archivos Excel en la carpeta: {mi_carpeta}")
-    else:
-        # Ejecuta el procesamiento
-        exito, mensaje = ejecutar_procesamiento_excel(mi_carpeta)
-        print(mensaje)
+        exito_total = True
+
+    return exito_total, mensajes

@@ -36,11 +36,9 @@ def dashboard():
     cur = conn.cursor()
     
     # --- 1. OBTENER LISTAS MAESTRAS PARA LOS SELECTS ---
-    # Obtenemos todos los lugares únicos para el nuevo <select> en el HTML
     cur.execute("SELECT nombre FROM lugares ORDER BY nombre ASC")
     lista_lugares = [row[0] for row in cur.fetchall()]
     
-    # Obtenemos todas las empresas únicas para el <select> de empresas
     cur.execute("SELECT nombre FROM empresas ORDER BY nombre ASC")
     lista_empresas = [row[0] for row in cur.fetchall()]
 
@@ -56,14 +54,14 @@ def dashboard():
     por_pagina = 15 
     offset = (pagina - 1) * por_pagina
 
-    # Lógica de fecha por defecto (Si no hay fecha, mostrar Hoy)
+    # Lógica de fecha por defecto
     if not f_fecha:
         f_fecha = datetime.now().strftime('%Y-%m-%d')
         titulo_estado = f"Programación para Hoy ({f_fecha})"
     else:
         titulo_estado = f"Resultados para el día {f_fecha}"
 
-    # --- 3. CONSTRUIR SQL SEGURO (USANDO PARÁMETROS %s) ---
+    # --- 3. CONSTRUIR SQL ---
     condiciones = ["1=1"]
     params = []
 
@@ -80,7 +78,6 @@ def dashboard():
         params.append(f_empresa)
         
     if f_lugar:
-        # Ahora que es un select, buscamos la coincidencia exacta del nombre
         condiciones.append("lugar = %s")
         params.append(f_lugar)
         
@@ -91,15 +88,16 @@ def dashboard():
     where_clause = "WHERE " + " AND ".join(condiciones)
     order_clause = "ORDER BY hora ASC"
 
-    # --- 4. CONSULTAS DE DATOS ---
+    # --- 4. CONSULTAS DE DATOS (AHORA INCLUYEN 'estado') ---
     
-    # A. LLEGADAS (Conteo para paginación y obtención de datos)
+    # A. LLEGADAS
     cur.execute(f"SELECT COUNT(*) FROM import_llegadas {where_clause}", params)
     total_llegadas = cur.fetchone()[0]
     paginas_llegadas = math.ceil(total_llegadas / por_pagina)
     
+    # Se agregó 'estado' al SELECT
     sql_llegadas = f"""
-        SELECT id, hora, empresa_nombre, lugar, anden, fecha 
+        SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
         FROM import_llegadas 
         {where_clause} {order_clause} 
         LIMIT %s OFFSET %s
@@ -107,13 +105,14 @@ def dashboard():
     cur.execute(sql_llegadas, params + [por_pagina, offset])
     llegadas = cur.fetchall()
 
-    # B. SALIDAS (Conteo para paginación y obtención de datos)
+    # B. SALIDAS
     cur.execute(f"SELECT COUNT(*) FROM import_salidas {where_clause}", params)
     total_salidas = cur.fetchone()[0]
     paginas_salidas = math.ceil(total_salidas / por_pagina)
 
+    # Se agregó 'estado' al SELECT
     sql_salidas = f"""
-        SELECT id, hora, empresa_nombre, lugar, anden, fecha 
+        SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
         FROM import_salidas 
         {where_clause} {order_clause} 
         LIMIT %s OFFSET %s
@@ -124,10 +123,8 @@ def dashboard():
     cur.close()
     conn.close()
 
-    # Determinamos el total de páginas considerando ambas tablas
     total_paginas = max(paginas_llegadas, paginas_salidas)
     
-    # Diccionario para persistir los valores en los inputs/selects del HTML
     filtros_actuales = {
         'fecha': f_fecha, 
         'hora': f_hora, 
