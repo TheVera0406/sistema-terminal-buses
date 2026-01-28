@@ -114,19 +114,16 @@
             letter-spacing: -0.5px;
         }
         
-        /* AQUÍ ESTÁ EL CAMBIO DE COLOR DEL ANDÉN */
+        /* ESTILOS DE ANDÉN */
         .celda-anden { 
             font-weight: 900; 
             font-size: 2.8rem;
-            /* Eliminé el color rojo fijo de aquí */
             display: block;
             text-align: center;
             line-height: 1;
         }
-
-        /* Clases específicas para el color */
-        .anden-salida { color: var(--color-rojo); }   /* Rojo para salidas */
-        .anden-llegada { color: var(--color-verde); } /* Verde para llegadas */
+        .anden-salida { color: var(--color-rojo); }   
+        .anden-llegada { color: var(--color-verde); } 
 
         /* TÍTULOS CÁPSULA */
         .titulo-capsula {
@@ -146,7 +143,7 @@
         .capsula-salida { background-color: var(--color-rojo); }
         .capsula-llegada { background-color: var(--color-verde); }
 
-        /* ESTADOS */
+        /* ESTADOS (Badges) */
         .badge-estado {
             padding: 10px 12px;
             border-radius: 8px;
@@ -158,9 +155,12 @@
             text-align: center;
         }
         
+        /* Colores de estados */
         .est-anden { background-color: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; animation: parpadeo 1.5s infinite; }
-        .est-viaje { background-color: #e3f2fd; color: #1565c0; border: 2px solid #bbdefb; }
-        .est-demora { background-color: #fff3e0; color: #ef6c00; border: 2px solid #ffe0b2; }
+        .est-viaje { background-color: #e3f2fd; color: #1565c0; border: 2px solid #bbdefb; animation: parpadeo 1.5s infinite; }
+        .est-demora { background-color: #fff3e0; color: #ef6c00; border: 2px solid #ffe0b2; animation: parpadeo 1.5s infinite; }
+        .est-finalizado { background-color: #ffffff; color: #da4949; border: 2px solid #da4949; animation: parpadeo 1.5s infinite;}
+        
         .est-normal { color: #999; font-weight: 600; font-size: 0.8rem; }
 
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
@@ -220,12 +220,14 @@
                                 <td class="celda-destino" title="{{ fila[3] }}">{{ fila[3] }}</td>
                                 <td><span class="celda-anden anden-salida">{{ fila[4] }}</span></td>
                                 <td class="text-center">
-                                    {% if fila[5] == 'En Andén' %}
+                                    {% if fila[6] == 'En Andén' %}
                                         <span class="badge-estado est-anden">En Andén</span>
-                                    {% elif fila[5] == 'En Recorrido' %}
+                                    {% elif fila[6] == 'En Recorrido' %}
                                         <span class="badge-estado est-viaje">En Viaje</span>
-                                    {% elif fila[5] == 'Demorado' %}
+                                    {% elif fila[6] == 'Demorado' %}
                                         <span class="badge-estado est-demora">Demorado</span>
+                                    {% elif fila[6] == 'Finalizado' %}
+                                        <span class="badge-estado est-finalizado">Finalizado</span>
                                     {% else %}
                                         <span class="est-normal">Programado</span>
                                     {% endif %}
@@ -263,12 +265,14 @@
                                 <td class="celda-destino" title="{{ fila[3] }}">{{ fila[3] }}</td>
                                 <td><span class="celda-anden anden-llegada">{{ fila[4] }}</span></td>
                                 <td class="text-center">
-                                    {% if fila[5] == 'En Andén' %}
+                                    {% if fila[6] == 'En Andén' %}
                                         <span class="badge-estado est-anden">En Andén</span>
-                                    {% elif fila[5] == 'En Recorrido' %}
+                                    {% elif fila[6] == 'En Recorrido' %}
                                         <span class="badge-estado est-viaje">En Viaje</span>
-                                    {% elif fila[5] == 'Demorado' %}
+                                    {% elif fila[6] == 'Demorado' %}
                                         <span class="badge-estado est-demora">Demorado</span>
+                                    {% elif fila[6] == 'Finalizado' %}
+                                        <span class="badge-estado est-finalizado">Finalizado</span>
                                     {% else %}
                                         <span class="est-normal">Programado</span>
                                     {% endif %}

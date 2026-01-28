@@ -91,6 +91,7 @@
         .color-anden { color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; }      
         .color-viaje { color: #084298; background-color: #cfe2ff; border: 1px solid #b6d4fe; }      
         .color-demorado { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; }
+        .color-finalizado { color: #7c1616; background-color: #ec9292; border: 1px solid #a35e5e; }
         .color-reset { color: #383d41; background-color: #e2e3e5; border: 1px solid #d6d8db; }      
 
         /* --- BOTONES --- */
@@ -215,6 +216,7 @@
                             {% if bus.estado == 'En Andén' %}color-anden
                             {% elif bus.estado == 'En Recorrido' %}color-viaje
                             {% elif bus.estado == 'Demorado' %}color-demorado
+                            {% elif bus.estado == 'Finalizado' %}color-finalizado
                             {% else %}color-reset{% endif %}">
                             <span id="texto-estado-{{ bus.id }}">{{ bus.estado }}</span>
                         </div>
@@ -236,7 +238,13 @@
                                 </button>
                             </div>
                             <div class="col-12">
-                                <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Programado', 'color-reset')" class="btn btn-operador-fijo">
+                                <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Finalizado', 'color-finalizado')" class="btn btn-operador-fijo">
+                                    <i class="bi bi-check-circle-fill"></i> Finalizado
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Programado', 'color-reset')" class="btn btn-operador-fijo bg-secondary">
+                                    <span class="text-dark fw-bold">
                                     <i class="bi bi-arrow-counterclockwise"></i> Resetear a Programado
                                 </button>
                             </div>

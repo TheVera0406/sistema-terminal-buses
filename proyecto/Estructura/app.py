@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 # --- 1. IMPORTACIÓN DE BLUEPRINTS ---
 from rutas_admin import admin_bp          
 from rutas_recorridos import usuario_bp   
-from rutas_operador import operador_bp  # <--- NUEVO: Importamos el módulo del operador
+from rutas_operador import operador_bp
 
 load_dotenv()
 
@@ -22,15 +22,15 @@ app.secret_key = os.getenv("SECRET_KEY")
 # --- 2. REGISTRO DE BLUEPRINTS ---
 app.register_blueprint(admin_bp)
 app.register_blueprint(usuario_bp)
-app.register_blueprint(operador_bp)     # <--- NUEVO: Registramos el blueprint
+app.register_blueprint(operador_bp)
 
 # --- 3. CONFIGURACIÓN LOGIN ---
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' 
 
-login_manager.login_message = "Por favor, inicia sesión para acceder a esta página."
-login_manager.login_message_category = "danger"
+login_manager.login_message = "Por favor, inicie sesión para ingresar."
+login_manager.login_message_category = "warning"
 
 class User(UserMixin):
     def __init__(self, id, username, password, rol):
@@ -38,19 +38,6 @@ class User(UserMixin):
         self.username = username
         self.password = password
         self.rol = rol
-
-@login_manager.user_loader
-def load_user(user_id):
-    conn = obtener_conexion()
-    if not conn: return None
-    cur = conn.cursor()
-    cur.execute("SELECT id, username, password, rol FROM usuarios WHERE id = %s", (user_id,))
-    user_data = cur.fetchone()
-    cur.close()
-    conn.close()
-    if user_data:
-        return User(user_data[0], user_data[1], user_data[2], user_data[3])
-    return None
 
 def obtener_conexion():
     try:
@@ -62,40 +49,55 @@ def obtener_conexion():
             port=os.getenv("DB_PORT", "5432")
         )
     except Exception as e:
-        print(f"Error DB: {e}")
+        print(f"Error conexión DB: {e}")
         return None
 
-# --- 4. FUNCIÓN PARA PANTALLA PÚBLICA (TV) ---
+@login_manager.user_loader
+def load_user(user_id):
+    conn = obtener_conexion()
+    if conn:
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, password, rol FROM usuarios WHERE id = %s", (user_id,))
+        user_data = cur.fetchone()
+        cur.close()
+        conn.close()
+        if user_data:
+            return User(user_data[0], user_data[1], user_data[2], user_data[3])
+    return None
+
+# ==============================================================================
+# RUTA PÚBLICA (PANTALLA TV)
+# ==============================================================================
+# IMPORTANTE: No tocar esta función, aquí es donde se cargan los estados (Andén, Demorado, etc.)
 def obtener_datos_filtrados(tabla):
     conn = obtener_conexion()
     if not conn: return []
+    
     cur = conn.cursor()
-    
+    # Rango de tiempo: 2 horas atrás hasta 10 horas adelante
     ahora = datetime.now()
-    inicio_ventana = ahora - timedelta(hours=2)
-    fin_ventana = ahora + timedelta(hours=12)
+    inicio = ahora - timedelta(hours=2)
+    fin = ahora + timedelta(hours=10)
     
-    # Lógica Timestamp
-    query = f"""
-        SELECT fecha, hora, empresa_nombre, lugar, anden, estado 
-        FROM {tabla} 
-        WHERE (fecha + hora) BETWEEN %s AND %s
-        ORDER BY fecha ASC, hora ASC
+    # Filtro fecha HOY para simplificar visualización
+    fecha_hoy = ahora.strftime('%Y-%m-%d')
+    
+    sql = f"""
+        SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
+        FROM {tabla}
+        WHERE fecha = %s
+        AND TO_TIMESTAMP(fecha || ' ' || hora, 'YYYY-MM-DD HH24:MI:SS') BETWEEN %s AND %s
+        ORDER BY hora ASC
     """
-    
-    try:
-        cur.execute(query, (inicio_ventana, fin_ventana))
-        datos = cur.fetchall()
-    except Exception as e:
-        print(f"Error consulta: {e}")
-        datos = []
-    
+    cur.execute(sql, (fecha_hoy, inicio, fin))
+    datos = cur.fetchall()
     cur.close()
     conn.close()
     return datos
 
 @app.route('/')
 def inicio():
+    # Obtenemos los buses (con sus estados intactos)
     llegadas = obtener_datos_filtrados('import_llegadas')
     salidas = obtener_datos_filtrados('import_salidas')
     
@@ -103,7 +105,11 @@ def inicio():
     conn = obtener_conexion()
     if conn:
         cur = conn.cursor()
-        cur.execute("SELECT contenido FROM noticias ORDER BY id DESC")
+        
+        # --- EL ÚNICO CAMBIO ESTÁ AQUÍ ---
+        # Solo traemos las noticias donde activa = TRUE
+        cur.execute("SELECT contenido FROM noticias WHERE activa = TRUE ORDER BY id DESC")
+        
         noticias = [row[0] for row in cur.fetchall()]
         cur.close()
         conn.close()
@@ -116,7 +122,6 @@ def inicio():
                            salidas=salidas, 
                            noticias_db=noticias)
 
-# --- 5. LOGUEO CON REDIRECCIÓN INTELIGENTE ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -135,15 +140,11 @@ def login():
                 user_obj = User(user_data[0], user_data[1], user_data[2], user_data[3])
                 login_user(user_obj)
                 
-                # --- AQUÍ ESTÁ EL CAMBIO PRINCIPAL ---
                 if user_obj.rol == 'operador':
-                    # Si es operador, va directo a SU panel
                     return redirect(url_for('operador_bp.panel_operador'))
                 elif user_obj.rol == 'admin':
-                    # Si es admin, va al panel general
                     return redirect(url_for('admin_bp.admin_panel'))
                 else:
-                    # Cualquier otro rol va a la vista pública
                     return redirect(url_for('usuario_bp.dashboard')) 
             else:
                 flash('Usuario o contraseña incorrectos', 'danger')
@@ -157,4 +158,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)

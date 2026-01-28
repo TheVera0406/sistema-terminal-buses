@@ -132,6 +132,7 @@
                                 {% if estado == 'En Andén' %}bg-success
                                 {% elif estado == 'En Recorrido' %}bg-primary
                                 {% elif estado == 'Demorado' %}bg-warning text-dark
+                                {% elif estado == 'Finalizado' %}bg-danger
                                 {% else %}bg-secondary{% endif %}">
                                 {{ estado if estado else 'Programado' }}
                             </span>
@@ -258,7 +259,7 @@
                         <i class="bi bi-telephone-fill text-info fs-5"></i> 
                         <span class="fw-bold ms-1 text-info" style="font-size: 1rem;">CONTACTO</span>
                     </div>
-                    <div style="font-size: 0.95rem;">+56 9 1234 5678</div>
+                    <div style="font-size: 0.95rem;">672237596</div>
                 </div>
 
                 <div class="col-md-4">
@@ -266,7 +267,7 @@
                         <i class="bi bi-envelope-fill text-info fs-5"></i> 
                         <span class="fw-bold ms-1 text-info" style="font-size: 1rem;">EMAIL</span>
                     </div>
-                    <div style="font-size: 0.95rem;">contacto@terminalcoyhaique.cl</div>
+                    <div style="font-size: 0.95rem;">terminaldebuses@coyhaique.cl</div>
                 </div>
 
             </div>

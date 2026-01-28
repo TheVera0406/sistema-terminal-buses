@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 import psycopg2
 from datetime import datetime
@@ -64,7 +64,7 @@ def admin_panel():
     cur.execute("SELECT nombre FROM empresas ORDER BY nombre ASC")
     lista_empresas = [row[0] for row in cur.fetchall()]
 
-    cur.execute("SELECT id, contenido, fecha_creacion FROM noticias ORDER BY id DESC")
+    cur.execute("SELECT id, contenido, fecha_creacion, activa FROM noticias ORDER BY id DESC")
     lista_noticias = cur.fetchall()
 
     condiciones = ["1=1"]
@@ -220,7 +220,7 @@ def importar_excel():
 def eliminar(tipo, id):
     if current_user.rol != 'admin': return redirect(url_for('inicio'))
     
-    tabla = "import_llegadas" if tipo == "llegadas" else "import_salidas"
+    tabla = "import_llegadas" if tipo == "llegada" else "import_salidas"
     conn = obtener_conexion_admin()
     cur = conn.cursor()
     cur.execute(f"DELETE FROM {tabla} WHERE id = %s", (id,))
@@ -238,7 +238,7 @@ def editar_registro():
 
     id_reg = request.form.get('id') 
     tipo = request.form.get('tipo') 
-    tabla = 'import_llegadas' if tipo == 'llegadas' else 'import_salidas'
+    tabla = 'import_llegadas' if tipo == 'llegada' else 'import_salidas'
     
     # Datos del formulario
     fecha = request.form.get('fecha')
@@ -276,3 +276,45 @@ def editar_registro():
         conn.close()
 
     return redirect(url_for('admin_bp.admin_panel'))
+
+# ========================================================
+# NUEVAS RUTAS PARA GESTIÓN DE NOTICIAS
+# ========================================================
+
+# --- EDITAR TEXTO DE NOTICIA ---
+@admin_bp.route('/admin/noticias/editar', methods=['POST'])
+@login_required
+def editar_noticia_texto():
+    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    
+    id_noticia = request.form.get('id_noticia')
+    nuevo_contenido = request.form.get('texto_noticia_edit').strip()
+    
+    if id_noticia and nuevo_contenido:
+        conn = obtener_conexion_admin()
+        cur = conn.cursor()
+        cur.execute("UPDATE noticias SET contenido = %s WHERE id = %s", (nuevo_contenido, id_noticia))
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash('Noticia actualizada correctamente.', 'success')
+    
+    return redirect(url_for('admin_bp.admin_panel'))
+
+# --- CAMBIAR ESTADO (CHECK) ---
+@admin_bp.route('/admin/noticias/estado/<int:id>', methods=['POST'])
+@login_required
+def cambiar_estado_noticia(id):
+    if current_user.rol != 'admin': return jsonify({'status': 'error'}), 403
+    
+    data = request.get_json()
+    nuevo_estado = data.get('activa') # Esto será True o False
+    
+    conn = obtener_conexion_admin()
+    cur = conn.cursor()
+    cur.execute("UPDATE noticias SET activa = %s WHERE id = %s", (nuevo_estado, id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return jsonify({'status': 'success'})
