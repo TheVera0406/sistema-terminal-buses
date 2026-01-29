@@ -174,6 +174,32 @@
             z-index: 1000;
             padding: 15px 0; 
         }
+
+        /* --- ESTILOS PARA MARQUESINA (TEXTO QUE SE MUEVE) --- */
+        .marquee-wrapper {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            display: block;
+
+        }
+
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        /* Clase que activa la animación */
+        .hacer-scroll {
+            animation: desplazamiento 8s linear infinite alternate; /* 10 segundos ida y vuelta */
+        }
+
+        @keyframes desplazamiento {
+            0%, 15% { transform: translateX(0); } /* Espera un poco al inicio */
+            85%, 100% { transform: translateX(var(--move-x)); } /* Se mueve a la izquierda */
+        }
+        
     </style>
 </head>
 <body>
@@ -217,7 +243,11 @@
                             <tr style="animation: fadeIn 0.4s ease-in-out;">
                                 <td class="celda-hora">{{ fila[1].strftime('%H:%M') }}</td>
                                 <td class="celda-empresa" title="{{ fila[2] }}">{{ fila[2] }}</td>
-                                <td class="celda-destino" title="{{ fila[3] }}">{{ fila[3] }}</td>
+                                <td class="celda-destino" title="{{ fila[3] }}">
+                                    <div class="marquee-wrapper">
+                                        <span class="marquee-content">{{ fila[3] }}</span>
+                                    </div>
+                                </td>
                                 <td><span class="celda-anden anden-salida">{{ fila[4] }}</span></td>
                                 <td class="text-center">
                                     {% if fila[6] == 'En Andén' %}
@@ -262,7 +292,11 @@
                             <tr style="animation: fadeIn 0.4s ease-in-out;">
                                 <td class="celda-hora">{{ fila[1].strftime('%H:%M') }}</td>
                                 <td class="celda-empresa" title="{{ fila[2] }}">{{ fila[2] }}</td>
-                                <td class="celda-destino" title="{{ fila[3] }}">{{ fila[3] }}</td>
+                                <td class="celda-destino" title="{{ fila[3] }}">
+                                    <div class="marquee-wrapper">
+                                        <span class="marquee-content">{{ fila[3] }}</span>
+                                    </div>
+                                </td>
                                 <td><span class="celda-anden anden-llegada">{{ fila[4] }}</span></td>
                                 <td class="text-center">
                                     {% if fila[6] == 'En Andén' %}
@@ -333,6 +367,7 @@
                 if (indiceActual >= totalFilas) {
                     indiceActual = 0;
                 }
+                activarMarquesina();
             }
             mostrarBloque();
             setInterval(mostrarBloque, 10000); 
@@ -368,6 +403,31 @@
 
         /* AUTO REFRESH */
         setTimeout(() => { window.location.reload(); }, 180000); 
+
+
+        // Función para calcular si el texto es largo y moverlo
+        function activarMarquesina() {
+            const textos = document.querySelectorAll('.marquee-content');
+            
+            textos.forEach(texto => {
+                const wrapper = texto.parentElement;
+                // Reiniciamos para medir bien
+                texto.style.removeProperty('--move-x');
+                texto.classList.remove('hacer-scroll');
+
+                const anchoTexto = texto.scrollWidth;
+                const anchoVisible = wrapper.clientWidth;
+
+                // Si el texto es más grande que la celda (+10px de margen)
+                if (anchoTexto > anchoVisible) {
+                    const diferencia = anchoVisible - anchoTexto; 
+                    // Guardamos la distancia exacta que debe recorrer
+                    texto.style.setProperty('--move-x', (diferencia - 20) + 'px'); 
+                    texto.classList.add('hacer-scroll');
+                }
+            });
+        }        
+
     </script>
 </body>
 </html>
