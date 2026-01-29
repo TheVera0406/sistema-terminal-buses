@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 from manipulacion_datos.generar_salidas_llegadas import ejecutar_procesamiento_excel
 from manipulacion_datos.insertar_datos import ejecutar_insercion_datos, obtener_id_empresa, obtener_id_lugar
 
+from arreglo_fecha import obtener_hora_actual
+
 load_dotenv()
 
 admin_bp = Blueprint('admin_bp', __name__)
@@ -35,10 +37,12 @@ def obtener_conexion_admin():
 def admin_panel():
     if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
 
-    # Fecha por defecto: HOY
+    ahora_chile = obtener_hora_actual()
+
     f_fecha = request.args.get('fecha', '')
     if not f_fecha:
-        f_fecha = datetime.now().strftime('%Y-%m-%d')
+        f_fecha = ahora_chile.strftime('%Y-%m-%d')
+
 
     # Nuevo filtro: HORA
     f_hora = request.args.get('hora', '').strip()
