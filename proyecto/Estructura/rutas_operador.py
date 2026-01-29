@@ -29,12 +29,12 @@ def panel_operador():
     # 1. SEGURIDAD: Solo Admin y Operador pueden entrar
     if current_user.rol not in ['admin', 'operador']:
         flash("No tienes permiso para acceder al panel de operador.", "danger")
-        return redirect(url_for('inicio'))
+        return redirect(url_for('usuario_bp.dashboard'))
 
     conn = obtener_conexion()
     if not conn:
         flash("Error de conexión con la base de datos.", "danger")
-        return redirect(url_for('inicio'))
+        return redirect(url_for('usuario_bp.dashboard'))
         
     cur = conn.cursor()
     

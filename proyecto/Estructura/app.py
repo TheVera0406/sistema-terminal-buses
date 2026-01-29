@@ -65,10 +65,10 @@ def load_user(user_id):
             return User(user_data[0], user_data[1], user_data[2], user_data[3])
     return None
 
-# ==============================================================================
+
 # RUTA PÚBLICA (PANTALLA TV)
-# ==============================================================================
-# IMPORTANTE: No tocar esta función, aquí es donde se cargan los estados (Andén, Demorado, etc.)
+
+# aquí es donde se cargan los estados (Andén, Demorado, ...)
 def obtener_datos_filtrados(tabla):
     conn = obtener_conexion()
     if not conn: return []
@@ -95,7 +95,7 @@ def obtener_datos_filtrados(tabla):
     conn.close()
     return datos
 
-@app.route('/')
+@app.route('/pantalla')
 def inicio():
     # Obtenemos los buses (con sus estados intactos)
     llegadas = obtener_datos_filtrados('import_llegadas')

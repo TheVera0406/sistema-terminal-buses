@@ -33,7 +33,7 @@ def obtener_conexion_admin():
 @admin_bp.route('/admin')
 @login_required
 def admin_panel():
-    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
 
     # Fecha por defecto: HOY
     f_fecha = request.args.get('fecha', '')
@@ -123,7 +123,7 @@ def admin_panel():
 @admin_bp.route('/admin/noticias/nueva', methods=['POST'])
 @login_required
 def nueva_noticia():
-    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
     
     contenido = request.form.get('texto_noticia', '').strip()
     if contenido:
@@ -140,7 +140,7 @@ def nueva_noticia():
 @admin_bp.route('/admin/noticias/eliminar/<int:id>')
 @login_required
 def eliminar_noticia(id):
-    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
     
     conn = obtener_conexion_admin()
     cur = conn.cursor()
@@ -155,7 +155,7 @@ def eliminar_noticia(id):
 @admin_bp.route('/admin/importar', methods=['POST'])
 @login_required
 def importar_excel():
-    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
     
     archivos = request.files.getlist('file')
     carpeta_temp = os.path.join(os.getcwd(), 'temp_uploads')
@@ -218,7 +218,7 @@ def importar_excel():
 @admin_bp.route('/admin/eliminar/<tipo>/<int:id>')
 @login_required
 def eliminar(tipo, id):
-    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
     
     tabla = "import_llegadas" if tipo == "llegada" else "import_salidas"
     conn = obtener_conexion_admin()
@@ -234,7 +234,7 @@ def eliminar(tipo, id):
 @admin_bp.route('/admin/editar', methods=['POST'])
 @login_required
 def editar_registro():
-    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
 
     id_reg = request.form.get('id') 
     tipo = request.form.get('tipo') 
@@ -277,15 +277,15 @@ def editar_registro():
 
     return redirect(url_for('admin_bp.admin_panel'))
 
-# ========================================================
+
 # NUEVAS RUTAS PARA GESTIÓN DE NOTICIAS
-# ========================================================
+
 
 # --- EDITAR TEXTO DE NOTICIA ---
 @admin_bp.route('/admin/noticias/editar', methods=['POST'])
 @login_required
 def editar_noticia_texto():
-    if current_user.rol != 'admin': return redirect(url_for('inicio'))
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
     
     id_noticia = request.form.get('id_noticia')
     nuevo_contenido = request.form.get('texto_noticia_edit').strip()

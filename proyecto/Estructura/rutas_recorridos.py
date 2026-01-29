@@ -23,10 +23,10 @@ def obtener_conexion_usuario():
         print(f" Error DB Usuario: {e}")
         return None
 
-# ==============================================================================
+
 # RUTA PRINCIPAL: CONSULTA DE RECORRIDOS (PÚBLICA)
-# ==============================================================================
-@usuario_bp.route('/recorridos')
+
+@usuario_bp.route('/')
 def dashboard():
     conn = obtener_conexion_usuario()
     if not conn:
@@ -142,4 +142,6 @@ def dashboard():
                            total_paginas=total_paginas,
                            lista_lugares=lista_lugares,   
                            lista_empresas=lista_empresas, 
-                           filtros=filtros_actuales)
+                           filtros=filtros_actuales,
+                           total_salidas=total_salidas,
+                           total_llegadas=total_llegadas)
