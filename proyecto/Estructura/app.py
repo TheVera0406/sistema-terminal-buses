@@ -13,10 +13,6 @@ from rutas_admin import admin_bp
 from rutas_recorridos import usuario_bp   
 from rutas_operador import operador_bp
 
-
-from arreglo_fecha import obtener_hora_actual
-
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -78,12 +74,9 @@ def obtener_datos_filtrados(tabla):
     if not conn: return []
     
     cur = conn.cursor()
-
-
-    ahora = obtener_hora_actual()
-
-
-    inicio = ahora - timedelta(hours=2)
+    # Rango de tiempo: 2 horas atrás hasta 10 horas adelante
+    ahora = datetime.now()
+    inicio = ahora - timedelta(hours=5)
     fin = ahora + timedelta(hours=10)
     
     # Filtro fecha HOY para simplificar visualización

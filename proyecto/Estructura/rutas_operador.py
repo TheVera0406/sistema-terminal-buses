@@ -5,8 +5,6 @@ import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-from arreglo_fecha import obtener_hora_actual
-
 load_dotenv()
 
 operador_bp = Blueprint('operador_bp', __name__)
@@ -42,8 +40,8 @@ def panel_operador():
     
     # 2. DEFINIR VENTANA DE TIEMPO
     # Mostramos lo que pasó hace 2 horas y lo que viene en las próximas 10 horas
-    ahora = obtener_hora_actual()
-    inicio_ventana = ahora - timedelta(hours=2)
+    ahora = datetime.now()
+    inicio_ventana = ahora - timedelta(hours=5)
     fin_ventana = ahora + timedelta(hours=10)
 
     # 3. FILTROS (Listas para llenar los selects del HTML)

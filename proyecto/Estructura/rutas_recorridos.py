@@ -6,9 +6,6 @@ import math
 import os
 from dotenv import load_dotenv
 
-# Importamos la función que creaste para arreglar la hora
-from arreglo_fecha import obtener_hora_actual
-
 load_dotenv()
 
 usuario_bp = Blueprint('usuario_bp', __name__)
@@ -57,12 +54,9 @@ def dashboard():
     por_pagina = 15 
     offset = (pagina - 1) * por_pagina
 
-    # --- CORRECCIÓN DE HORA (USANDO TU ARCHIVO) ---
-    ahora_chile = obtener_hora_actual()
-
     # Lógica de fecha por defecto
     if not f_fecha:
-        f_fecha = ahora_chile.strftime('%Y-%m-%d')
+        f_fecha = datetime.now().strftime('%Y-%m-%d')
         titulo_estado = f"Programación para Hoy ({f_fecha})"
     else:
         titulo_estado = f"Resultados para el día {f_fecha}"
@@ -75,16 +69,9 @@ def dashboard():
         condiciones.append("fecha = %s")
         params.append(f_fecha)
     
-    # Lógica Inteligente de Hora:
     if f_hora:
-        # Si el usuario buscó una hora específica, filtramos por texto (LIKE)
         condiciones.append("hora::text LIKE %s")
         params.append(f"{f_hora}%")
-    elif f_fecha == ahora_chile.strftime('%Y-%m-%d'):
-        # Si NO buscó hora y es HOY, mostramos solo buses futuros (>= hora actual de Chile)
-        hora_actual = ahora_chile.strftime('%H:%M')
-        condiciones.append("hora >= %s")
-        params.append(hora_actual)
         
     if f_empresa:
         condiciones.append("empresa_nombre = %s")
@@ -101,13 +88,14 @@ def dashboard():
     where_clause = "WHERE " + " AND ".join(condiciones)
     order_clause = "ORDER BY hora ASC"
 
-    # --- 4. CONSULTAS DE DATOS ---
+    # --- 4. CONSULTAS DE DATOS (AHORA INCLUYEN 'estado') ---
     
     # A. LLEGADAS
     cur.execute(f"SELECT COUNT(*) FROM import_llegadas {where_clause}", params)
     total_llegadas = cur.fetchone()[0]
     paginas_llegadas = math.ceil(total_llegadas / por_pagina)
     
+    # Se agregó 'estado' al SELECT
     sql_llegadas = f"""
         SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
         FROM import_llegadas 
@@ -122,6 +110,7 @@ def dashboard():
     total_salidas = cur.fetchone()[0]
     paginas_salidas = math.ceil(total_salidas / por_pagina)
 
+    # Se agregó 'estado' al SELECT
     sql_salidas = f"""
         SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
         FROM import_salidas 
