@@ -179,6 +179,7 @@
                                 {% if estado == 'En Andén' %}bg-success
                                 {% elif estado == 'En Recorrido' %}bg-primary
                                 {% elif estado == 'Demorado' %}bg-warning text-dark
+                                {% elif estado == 'Finalizado' %}bg-danger
                                 {% else %}bg-secondary{% endif %}">
                                 {{ estado if estado else 'Programado' }}
                             </span>

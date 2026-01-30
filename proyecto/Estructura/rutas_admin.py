@@ -7,6 +7,7 @@ import os
 import shutil
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+from psycopg2 import IntegrityError
 
 # Módulos propios
 from manipulacion_datos.generar_salidas_llegadas import ejecutar_procesamiento_excel
@@ -58,11 +59,14 @@ def admin_panel():
     
     cur = conn.cursor()
 
-    cur.execute("SELECT nombre FROM lugares ORDER BY nombre ASC")
-    lista_lugares = [row[0] for row in cur.fetchall()]
+    cur.execute("SELECT id, nombre FROM empresas ORDER BY nombre ASC")
+    lista_empresas_full = cur.fetchall() 
     
-    cur.execute("SELECT nombre FROM empresas ORDER BY nombre ASC")
-    lista_empresas = [row[0] for row in cur.fetchall()]
+    cur.execute("SELECT id, nombre FROM lugares ORDER BY nombre ASC")
+    lista_lugares_full = cur.fetchall()
+
+    lista_empresas = [e[1] for e in lista_empresas_full]
+    lista_lugares = [l[1] for l in lista_lugares_full]
 
     cur.execute("SELECT id, contenido, fecha_creacion, activa FROM noticias ORDER BY id DESC")
     lista_noticias = cur.fetchall()
@@ -117,7 +121,9 @@ def admin_panel():
                            total_paginas=total_paginas,
                            lista_lugares=lista_lugares,
                            lista_empresas=lista_empresas,
-                           filtros=filtros)
+                           filtros=filtros,
+                           empresas_full=lista_empresas_full,
+                           lugares_full=lista_lugares_full)
 
 # --- NUEVA NOTICIA ---
 @admin_bp.route('/admin/noticias/nueva', methods=['POST'])
@@ -318,3 +324,112 @@ def cambiar_estado_noticia(id):
     conn.close()
     
     return jsonify({'status': 'success'})
+
+# ==========================================
+# GESTIÓN DE DATOS MAESTROS (EMPRESAS / LUGARES)
+# ==========================================
+
+@admin_bp.route('/admin/maestros/agregar', methods=['POST'])
+@login_required
+def agregar_maestro():
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
+
+    tipo = request.form.get('tipo') # 'empresa' o 'lugar'
+    nombre = request.form.get('nombre').strip().upper() # Guardamos en mayúsculas para ordenar
+
+    if not nombre:
+        flash("El nombre no puede estar vacío.", "warning")
+        return redirect(url_for('admin_bp.admin_panel'))
+
+    conn = obtener_conexion_admin()
+    cur = conn.cursor()
+    
+    tabla = "empresas" if tipo == "empresa" else "lugares"
+    
+    try:
+        cur.execute(f"INSERT INTO {tabla} (nombre) VALUES (%s)", (nombre,))
+        conn.commit()
+        flash(f"{tipo.capitalize()} '{nombre}' agregada correctamente.", "success")
+    except IntegrityError:
+        conn.rollback()
+        flash(f"Error: Ya existe {tipo} con ese nombre.", "danger")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error desconocido: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+
+    return redirect(url_for('admin_bp.admin_panel'))
+
+
+@admin_bp.route('/admin/maestros/eliminar', methods=['POST'])
+@login_required
+def eliminar_maestro():
+    if current_user.rol != 'admin': return redirect(url_for('usuario_bp.dashboard'))
+
+    tipo = request.form.get('tipo') # 'empresa' o 'lugar'
+    id_dato = request.form.get('id')
+
+    if not id_dato:
+        flash("Error: Identificador no válido.", "danger")
+        return redirect(url_for('admin_bp.admin_panel'))
+
+    conn = obtener_conexion_admin()
+    cur = conn.cursor()
+    
+    # Definimos en qué tabla buscar el nombre
+    tabla_maestra = "empresas" if tipo == "empresa" else "lugares"
+    
+    try:
+        # --- PASO 1: OBTENER EL NOMBRE REAL ---
+        # Primero averiguamos cómo se llama la empresa/lugar que quieres borrar
+        cur.execute(f"SELECT nombre FROM {tabla_maestra} WHERE id = %s", (id_dato,))
+        resultado = cur.fetchone()
+        
+        if not resultado:
+            flash(f"Error: No se encontró el registro en {tabla_maestra}.", "warning")
+            return redirect(url_for('admin_bp.admin_panel'))
+            
+        nombre_real = resultado[0] # Ej: "Empresa Prueba"
+
+        # --- PASO 2: VERIFICAR SI ESE NOMBRE SE ESTÁ USANDO ---
+        # Buscamos en las tablas de recorridos por el TEXTO, no por el ID.
+        
+        if tipo == "empresa":
+            # Verificamos columna 'empresa_nombre'
+            cur.execute("SELECT COUNT(*) FROM import_salidas WHERE empresa_nombre = %s", (nombre_real,))
+            count_salidas = cur.fetchone()[0]
+            
+            cur.execute("SELECT COUNT(*) FROM import_llegadas WHERE empresa_nombre = %s", (nombre_real,))
+            count_llegadas = cur.fetchone()[0]
+            
+        else: # es lugar
+            # Verificamos columna 'lugar'
+            cur.execute("SELECT COUNT(*) FROM import_salidas WHERE lugar = %s", (nombre_real,))
+            count_salidas = cur.fetchone()[0]
+            
+            cur.execute("SELECT COUNT(*) FROM import_llegadas WHERE lugar = %s", (nombre_real,))
+            count_llegadas = cur.fetchone()[0]
+
+        # --- PASO 3: DECIDIR SI BORRAMOS ---
+        total_usos = count_salidas + count_llegadas
+
+        if total_usos > 0:
+            # Si se está usando, prohibimos borrar
+            flash(f"NO SE PUEDE BORRAR: '{nombre_real}' se está usando en {total_usos} recorridos. Debes eliminarlos primero.", "danger")
+            conn.rollback()
+        else:
+            # Si nadie lo usa, procedemos a borrar usando el ID
+            cur.execute(f"DELETE FROM {tabla_maestra} WHERE id = %s", (id_dato,))
+            conn.commit()
+            flash(f"'{nombre_real}' eliminado correctamente.", "success")
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Error técnico al eliminar: {e}", "danger")
+    finally:
+        cur.close()
+        conn.close()
+
+    return redirect(url_for('admin_bp.admin_panel'))

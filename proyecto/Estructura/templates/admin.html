@@ -33,6 +33,11 @@
         <a class="navbar-brand" href="#">PANEL DE ADMINISTRADOR</a>
         
         <div class="ms-auto d-flex align-items-center gap-2">
+            
+            <button class="btn btn-dark btn-sm fw-bold text-white" data-bs-toggle="modal" data-bs-target="#modalMaestros">
+                <i class="bi bi-building-gear me-1"></i> Gestion de Empresas y Lugares
+            </button>
+
             <a href="{{ url_for('inicio') }}" target="_blank" class="btn btn-dark btn-sm fw-bold">
                 <i class="bi bi-tv"></i> Ver Pantalla
             </a>
@@ -87,6 +92,7 @@
 
     <div class="card p-3 mb-4 border-0 shadow-sm" style="background-color: #002b3f;">
         <form method="GET" action="{{ url_for('admin_bp.admin_panel') }}" class="row g-2 align-items-end">
+            
             <div class="col-md-2 col-6">
                 <label class="form-label small fw-bold text-white">Fecha</label>
                 <input type="date" name="fecha" class="form-control form-control-sm" value="{{ filtros.fecha }}">
@@ -98,35 +104,43 @@
                        value="{{ filtros.hora }}" placeholder="00:00" maxlength="5">
             </div>
 
-            <div class="col-md-2 col-6">
-                <label class="form-label small fw-bold text-white">Empresa</label>
-                <select name="empresa" class="form-select form-select-sm">
-                    <option value="">Todas</option>
-                    {% for emp in lista_empresas %}
-                    <option value="{{ emp }}" {% if filtros.empresa == emp %}selected{% endif %}>{{ emp }}</option>
-                    {% endfor %}
-                </select>
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold" style="color: white !important;">Empresa</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white text-muted"><i class="bi bi-bus-front"></i></span>
+                    <input class="form-control form-control-sm" list="lista_empresas_dl" name="empresa" placeholder="Escribir o seleccionar" value="{{ filtros.empresa }}" autocomplete="off">
+                    <datalist id="lista_empresas_dl">
+                        {% for e in empresas_full %}
+                            <option value="{{ e[1] }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
             </div>
-            <div class="col-md-3 col-6">
-                <label class="form-label small fw-bold text-white">Lugar</label>
-                <select name="lugar" class="form-select form-select-sm">
-                    <option value="">Todos</option>
-                    {% for lug in lista_lugares %}
-                    <option value="{{ lug }}" {% if filtros.lugar == lug %}selected{% endif %}>{{ lug }}</option>
-                    {% endfor %}
-                </select>
+
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold" style="color: white !important;">Destino / Origen</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white text-muted"><i class="bi bi-geo-alt"></i></span>
+                    <input class="form-control form-control-sm" list="lista_lugares_dl" name="lugar" placeholder="Escribir o seleccionar" value="{{ filtros.lugar }}" autocomplete="off">
+                    <datalist id="lista_lugares_dl">
+                        {% for l in lugares_full %}
+                            <option value="{{ l[1] }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
             </div>
+
             <div class="col-md-1 col-6">
                 <label class="form-label small fw-bold text-white">Andén</label>
                 <input type="number" name="anden" class="form-control form-control-sm text-center" value="{{ filtros.anden }}" placeholder="#">
             </div>
             
-            <div class="col-md-3 col-12 d-flex gap-2">
+            <div class="col-md-2 col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-secondary btn-sm flex-grow-1 text-white">
                     <i class="bi bi-search"></i> Filtrar
                 </button>
                 <a href="{{ url_for('admin_bp.admin_panel') }}" class="btn btn-secondary btn-sm text-white">
-                    <i class="bi bi-x-circle"></i> Limpiar
+                    <i class="bi bi-x-circle"></i>
                 </a>
             </div>
         </form>
@@ -433,7 +447,80 @@
         </form>
     </div>
 </div>
+<div class="modal fade" id="modalMaestros" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl"> <div class="modal-content">
+            
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-database-gear me-2"></i>Gestión de Empresas y Lugares</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
 
+            <div class="modal-body bg-light">
+                <div class="row">
+                    
+                    <div class="col-md-6 border-end">
+                        <h5 class="text-primary mb-3"><i class="bi bi-bus-front me-2"></i>Empresas</h5>
+                        
+                        <form action="{{ url_for('admin_bp.agregar_maestro') }}" method="POST" class="d-flex gap-2 mb-3">
+                            <input type="hidden" name="tipo" value="empresa">
+                            <input type="text" name="nombre" class="form-control" placeholder="Nombre nueva empresa..." required autocomplete="off">
+                            <button type="submit" class="btn btn-success" title="Agregar"><i class="bi bi-plus-lg"></i></button>
+                        </form>
+
+                        <div class="card shadow-sm" style="height: 400px; overflow-y: auto;">
+                            <ul class="list-group list-group-flush">
+                                {% for emp in empresas_full %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-dark">{{ emp[1] }}</span>
+                                    
+                                    <form action="{{ url_for('admin_bp.eliminar_maestro') }}" method="POST" onsubmit="return confirm('¿Estás seguro de BORRAR la empresa {{ emp[1] }}?');">
+                                        <input type="hidden" name="tipo" value="empresa">
+                                        <input type="hidden" name="id" value="{{ emp[0] }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-success mb-3"><i class="bi bi-geo-alt me-2"></i>Lugares</h5>
+                        
+                        <form action="{{ url_for('admin_bp.agregar_maestro') }}" method="POST" class="d-flex gap-2 mb-3">
+                            <input type="hidden" name="tipo" value="lugar">
+                            <input type="text" name="nombre" class="form-control" placeholder="Nombre nuevo lugar..." required autocomplete="off">
+                            <button type="submit" class="btn btn-success" title="Agregar"><i class="bi bi-plus-lg"></i></button>
+                        </form>
+
+                        <div class="card shadow-sm" style="height: 400px; overflow-y: auto;">
+                            <ul class="list-group list-group-flush">
+                                {% for lug in lugares_full %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-dark">{{ lug[1] }}</span>
+                                    
+                                    <form action="{{ url_for('admin_bp.eliminar_maestro') }}" method="POST" onsubmit="return confirm('¿Borrar el lugar {{ lug[1] }}?');">
+                                        <input type="hidden" name="tipo" value="lugar">
+                                        <input type="hidden" name="id" value="{{ lug[0] }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                </div> </div> <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+
+        </div>
+    </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const modalEditar = document.getElementById('modalEditar');
