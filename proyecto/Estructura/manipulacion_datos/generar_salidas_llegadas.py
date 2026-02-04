@@ -19,12 +19,24 @@ MAPPING_EMPRESAS = {
 }
 
 def limpiar_texto(texto):
+    """
+    Limpia el texto convirtiendo a mayúsculas y quitando espacios,
+    PERO MANTENIENDO la Ñ y los ACENTOS.
+    """
     if pd.isna(texto) or str(texto).strip() == '': return ""
+    
+    # 1. Convertir a string, mayúsculas y quitar espacios de los extremos
     t = str(texto).upper().strip()
-    t = t.replace('Ñ', 'N')
-    try: 
-        t = ''.join(c for c in unicodedata.normalize('NFD', t) if unicodedata.category(c) != 'Mn')
-    except: pass
+    
+    # 2. Normalización 'NFC' (Forma Compuesta)
+    # Esto arregla problemas de codificación (ej: letras separadas) 
+
+    try:
+        t = unicodedata.normalize('NFC', t)
+    except:
+        pass
+
+    # 3. Aplicar correcciones manuales (Diccionario de empresas mal escritas)
     return MAPPING_EMPRESAS.get(t, t)
 
 def extraer_dia_de_hoja(nombre_hoja):
@@ -75,7 +87,6 @@ def procesar_excel(tipo, carpeta_uploads):
         try:
             xls = pd.read_excel(ruta_completa, sheet_name=None)
         except Exception as e:
-            # --- CAMBIO: Sin emojis ---
             reporte_errores.append(f"Error al leer '{archivo}': Formato inválido.")
             continue
 
@@ -86,7 +97,6 @@ def procesar_excel(tipo, carpeta_uploads):
             if dia is None: continue 
             
             if mes is None or anio is None:
-                # --- CAMBIO: Sin emojis ---
                 reporte_errores.append(f"Advertencia: Archivo '{archivo}' Hoja '{nombre_hoja}': No se detectó MES o AÑO.")
                 continue
             
@@ -126,8 +136,11 @@ def procesar_excel(tipo, carpeta_uploads):
 
 def guardar_csv(df, ruta_salida):
     if df.empty: return False
+    
+    # Limpiamos texto manteniendo acentos y Ñ
     if 'lugar' in df.columns: df['lugar'] = df['lugar'].apply(limpiar_texto)
     if 'empresa' in df.columns: df['empresa'] = df['empresa'].apply(limpiar_texto)
+    
     if 'anden' in df.columns: df['anden'] = pd.to_numeric(df['anden'], errors='coerce').fillna(0).astype(int)
     if 'empresa' in df.columns:
         df = df.dropna(subset=['empresa'])
@@ -137,6 +150,7 @@ def guardar_csv(df, ruta_salida):
     for c in cols: 
         if c not in df.columns: df[c] = ""
     
+    # Guardamos en UTF-8 para que la Ñ y los acentos se vean bien en el CSV
     df[cols].to_csv(ruta_salida, index=False, sep=';', encoding='utf-8')
     return True
 

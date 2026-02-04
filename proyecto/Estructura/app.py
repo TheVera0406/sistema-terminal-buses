@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import psycopg2
 from datetime import datetime, timedelta
 import os
+import pytz
 
 # SEGURIDAD Y LOGIN
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
@@ -66,38 +67,43 @@ def load_user(user_id):
     return None
 
 
-# RUTA PÚBLICA (PANTALLA TV)
+# ==============================================================================
+# RUTA PÚBLICA (PANTALLA TV) - LÓGICA CONTINUIDAD MADRUGADA
+# ==============================================================================
 
-# aquí es donde se cargan los estados (Andén, Demorado, ...)
 def obtener_datos_filtrados(tabla):
     conn = obtener_conexion()
     if not conn: return []
     
     cur = conn.cursor()
-    # Rango de tiempo: 2 horas atrás hasta 10 horas adelante
-    ahora = datetime.now()
-    inicio = ahora - timedelta(hours=5)
-    fin = ahora + timedelta(hours=10)
     
-    # Filtro fecha HOY para simplificar visualización
-    fecha_hoy = ahora.strftime('%Y-%m-%d')
+    # 2. DEFINIR ZONA HORARIA CHILE
+    tz_chile = pytz.timezone('America/Santiago')
+    ahora_chile = datetime.now(tz_chile)
     
+    # 3. USAR LA HORA CHILENA PARA LOS CÁLCULOS
+    fecha_hoy = ahora_chile.strftime('%Y-%m-%d')
+    fecha_manana = (ahora_chile + timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    # Consulta (La misma lógica de madrugada que ya aprobamos)
     sql = f"""
         SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
         FROM {tabla}
         WHERE fecha = %s
-        AND TO_TIMESTAMP(fecha || ' ' || hora, 'YYYY-MM-DD HH24:MI:SS') BETWEEN %s AND %s
-        ORDER BY hora ASC
+           OR (fecha = %s AND hora <= '04:00:00')
+        ORDER BY fecha ASC, hora ASC
     """
-    cur.execute(sql, (fecha_hoy, inicio, fin))
+    
+    cur.execute(sql, (fecha_hoy, fecha_manana))
     datos = cur.fetchall()
+    
     cur.close()
     conn.close()
     return datos
 
 @app.route('/pantalla')
 def inicio():
-    # Obtenemos los buses (con sus estados intactos)
+    # Obtenemos los buses con la nueva lógica (Hoy + Madrugada siguiente)
     llegadas = obtener_datos_filtrados('import_llegadas')
     salidas = obtener_datos_filtrados('import_salidas')
     
@@ -105,11 +111,8 @@ def inicio():
     conn = obtener_conexion()
     if conn:
         cur = conn.cursor()
-        
-        # --- EL ÚNICO CAMBIO ESTÁ AQUÍ ---
         # Solo traemos las noticias donde activa = TRUE
         cur.execute("SELECT contenido FROM noticias WHERE activa = TRUE ORDER BY id DESC")
-        
         noticias = [row[0] for row in cur.fetchall()]
         cur.close()
         conn.close()
@@ -122,32 +125,48 @@ def inicio():
                            salidas=salidas, 
                            noticias_db=noticias)
 
+# ==============================================================================
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        usuario = request.form['username']
+        # 1. CAMBIO: Recibimos 'rut' en lugar de 'username' del formulario HTML
+        rut_ingresado = request.form['rut'] 
         clave = request.form['password']
         
         conn = obtener_conexion()
         if conn:
             cur = conn.cursor()
-            cur.execute("SELECT id, username, password, rol FROM usuarios WHERE username = %s", (usuario,))
+            
+            # 2. CAMBIO: Buscamos por RUT en el WHERE
+            # (Seguimos trayendo el username en el SELECT para mostrarlo después)
+            cur.execute("SELECT id, username, password, rol, activo, rut FROM usuarios WHERE rut = %s", (rut_ingresado,))
             user_data = cur.fetchone()
             cur.close()
             conn.close()
 
-            if user_data and check_password_hash(user_data[2], clave):
-                user_obj = User(user_data[0], user_data[1], user_data[2], user_data[3])
-                login_user(user_obj)
-                
-                if user_obj.rol == 'operador':
-                    return redirect(url_for('operador_bp.panel_operador'))
-                elif user_obj.rol == 'admin':
-                    return redirect(url_for('admin_bp.admin_panel'))
+            if user_data:
+                # user_data[4] es 'activo'
+                if not user_data[4]: 
+                    flash('Tu cuenta ha sido desactivada.', 'danger')
+                    return render_template('login.html')
+
+                # user_data[2] es la contraseña hash
+                if check_password_hash(user_data[2], clave):
+                    # Creamos la sesión. Nota: user_data[1] sigue siendo el NOMBRE para mostrar
+                    user_obj = User(user_data[0], user_data[1], user_data[2], user_data[3])
+                    login_user(user_obj)
+                    
+                    if user_obj.rol == 'operador':
+                        return redirect(url_for('operador_bp.panel_operador'))
+                    elif user_obj.rol == 'admin':
+                        return redirect(url_for('admin_bp.admin_panel'))
+                    else:
+                        return redirect(url_for('usuario_bp.dashboard')) 
                 else:
-                    return redirect(url_for('usuario_bp.dashboard')) 
+                    flash('RUT o contraseña incorrectos', 'danger')
             else:
-                flash('Usuario o contraseña incorrectos', 'danger')
+                flash('RUT o contraseña incorrectos', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')

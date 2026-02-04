@@ -83,6 +83,22 @@
             display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
         }
         .offcanvas-filters { border-top-left-radius: 20px; border-top-right-radius: 20px; }
+    /* CLASES PERSONALIZADAS PARA BADGES (Estilo Unificado) */
+        .badge-custom {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-anden { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .badge-viaje { background-color: #cfe2ff; color: #084298; border: 1px solid #b6d4fe; }
+        .badge-demora { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+        .badge-finalizado { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; } /* Color Vino */
+        .badge-cancelado { background-color: #212529; color: #ffffff; border: 1px solid #000; } /* Gris Oscuro */
+        .badge-programado { background-color: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; } /* Gris Claro */
     </style>
 </head>
 <body>
@@ -144,12 +160,13 @@
                         </div>
                         <div class="text-center d-flex flex-column align-items-end">
                             
-                            <span class="badge mb-2 
-                                {% if estado == 'En Andén' %}bg-success
-                                {% elif estado == 'En Recorrido' %}bg-primary
-                                {% elif estado == 'Demorado' %}bg-warning text-dark
-                                {% elif estado == 'Finalizado' %}bg-danger
-                                {% else %}bg-secondary{% endif %}">
+                            <span class="badge-custom mb-2 
+                                {% if estado == 'En Andén' %}badge-anden
+                                {% elif estado == 'En Recorrido' %}badge-viaje
+                                {% elif estado == 'Demorado' %}badge-demora
+                                {% elif estado == 'Finalizado' %}badge-finalizado
+                                {% elif estado == 'Cancelado' %}badge-cancelado
+                                {% else %}badge-programado{% endif %}">
                                 {{ estado if estado else 'Programado' }}
                             </span>
 
@@ -175,12 +192,13 @@
                         </div>
                         <div class="text-center d-flex flex-column align-items-end">
                             
-                            <span class="badge mb-2 
-                                {% if estado == 'En Andén' %}bg-success
-                                {% elif estado == 'En Recorrido' %}bg-primary
-                                {% elif estado == 'Demorado' %}bg-warning text-dark
-                                {% elif estado == 'Finalizado' %}bg-danger
-                                {% else %}bg-secondary{% endif %}">
+                            <span class="badge-custom mb-2 
+                                {% if estado == 'En Andén' %}badge-anden
+                                {% elif estado == 'En Recorrido' %}badge-viaje
+                                {% elif estado == 'Demorado' %}badge-demora
+                                {% elif estado == 'Finalizado' %}badge-finalizado
+                                {% elif estado == 'Cancelado' %}badge-cancelado
+                                {% else %}badge-programado{% endif %}">
                                 {{ estado if estado else 'Programado' }}
                             </span>
 
@@ -270,7 +288,7 @@
                     </div>
                     <div style="font-size: 0.95rem;">
                         <a href="https://maps.app.goo.gl/dWPuJFWxV4DjNkQa7" target="_blank" class="text-white text-decoration-none hover-link">
-                            Calle Lautaro 109, Coyhaique
+                            Avenida Norte Sur  1280, Coyhaique
                         </a>
                     </div>
                 </div>
@@ -294,7 +312,7 @@
                     </div>
                     <div style="font-size: 0.95rem;">
                         <a href="mailto:terminaldebuses@coyhaique.cl" class="text-white text-decoration-none hover-link">
-                            terminaldebuses@coyhaique.cl
+                            anaaraus@coyhaique.cl
                         </a>
                     </div>
                 </div>

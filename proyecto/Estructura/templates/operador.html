@@ -88,12 +88,24 @@
             background-color: #f1f3f5; color: #495057;
             transition: all 0.3s ease;
         }
-        .color-anden { color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; }      
+        .color-anden { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }      
+        
+        /* 2. Azul */
         .color-viaje { color: #084298; background-color: #cfe2ff; border: 1px solid #b6d4fe; }      
-        .color-demorado { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; }
-        .color-finalizado { color: #7c1616; background-color: #ec9292; border: 1px solid #a35e5e; }
-        .color-reset { color: #383d41; background-color: #e2e3e5; border: 1px solid #d6d8db; }      
+        
+        /* 3. Amarillo/Naranja */
+        .color-demorado { color: #664d03; background-color: #fff3cd; border: 1px solid #ffecb5; }
+        
+        /* 4. Rojo Vino */
+        .color-finalizado { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
+        
+        /* 6. Gris Oscuro (Cancelado) */
+        .color-cancelado { color: #ffffff; background-color: #5e5e5e; border: 1px solid #000000; }
 
+        /* 5. Gris Claro (Reset/Programado) */
+        .color-reset { color: #6c757d; background-color: #f8f9fa; border: 1px solid #dee2e6; }
+
+        
         /* --- BOTONES --- */
         .btn-operador-fijo {
             width: 100%; padding: 8px 0; font-size: 0.85rem; font-weight: 600;
@@ -110,23 +122,27 @@
 <div class="fixed-header-wrapper">
     
     <nav class="navbar navbar-expand-lg navbar-dark navbar-operador">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                PANEL DE OPERADOR
-            </a>
-            
-            <div class="ms-auto d-flex align-items-center gap-2">
-                {% if current_user.rol == 'admin' %}
-                <a href="{{ url_for('admin_bp.admin_panel') }}" class="btn btn-dark btn-sm text-white">
-                    <i class="bi bi-shield-lock"></i> Panel Admin
+            <div class="container">
+                <a class="navbar-brand" href="#">
+                    PANEL DE OPERADOR
                 </a>
-                {% endif %}
+                
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    
+                    <button class="btn btn-warning btn-sm fw-bold text-dark me-2" data-bs-toggle="modal" data-bs-target="#modalBusExtra">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Registrar Extra
+                    </button>
+                    {% if current_user.rol == 'admin' %}
+                    <a href="{{ url_for('admin_bp.admin_panel') }}" class="btn btn-dark btn-sm text-white">
+                        <i class="bi bi-shield-lock"></i> Panel Admin
+                    </a>
+                    {% endif %}
 
-                <span class="navbar-text text-white me-2 d-none d-md-block small">| {{ usuario.username }}</span>
-                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Salir</a>
+                    <span class="navbar-text text-white me-2 d-none d-md-block small">| {{ usuario.username }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm">Salir</a>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
     <div class="container">
         <div class="card-filtros">
@@ -150,11 +166,22 @@
             </ul>
 
             <div class="row g-2 align-items-end">
-                <div class="col-3 col-md-2">
+                {% if current_user.rol == 'admin' %}
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold text-white">Fecha</label>
+                    <input type="date" 
+                           class="form-control form-control-sm text-center text-secondary" 
+                           value="{{ fecha_seleccionada }}"
+                           onchange="window.location.href = '?fecha=' + this.value">
+                </div>
+                {% endif %}
+
+                <div class="{% if current_user.rol == 'admin' %}col-6 col-md-2{% else %}col-3 col-md-2{% endif %}">
                     <label class="form-label small fw-bold text-white">Hora</label>
                     <input type="text" id="filtroHora" class="form-control form-control-sm text-center" placeholder="00:00" maxlength="5" onkeyup="aplicarFiltros()">
                 </div>
-                <div class="col-4 col-md-4">
+
+                <div class="{% if current_user.rol == 'admin' %}col-6 col-md-3{% else %}col-4 col-md-4{% endif %}">
                     <label class="form-label small fw-bold text-white">Empresa</label>
                     <select id="filtroEmpresa" class="form-select form-select-sm" onchange="aplicarFiltros()">
                         <option value="">Todas</option>
@@ -163,7 +190,8 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-3 col-md-4">
+
+                <div class="{% if current_user.rol == 'admin' %}col-6 col-md-3{% else %}col-3 col-md-4{% endif %}">
                     <label class="form-label small fw-bold text-white">Lugar</label>
                     <select id="filtroLugar" class="form-select form-select-sm" onchange="aplicarFiltros()">
                         <option value="">Todos</option>
@@ -172,6 +200,7 @@
                         {% endfor %}
                     </select>
                 </div>
+
                 <div class="col-2 col-md-2">
                     <label class="form-label small fw-bold text-white">Andén</label>
                     <input type="text" id="filtroAnden" class="form-control form-control-sm text-center" placeholder="#" onkeyup="aplicarFiltros()">
@@ -218,16 +247,18 @@
                     </div>
 
                     <div class="mt-auto">
-                        <div id="box-estado-{{ bus.id }}" class="estado-container 
+                        <div id="box-estado-{{ bus.tipo }}-{{ bus.id }}" class="estado-container 
                             {% if bus.estado == 'En Andén' %}color-anden
                             {% elif bus.estado == 'En Recorrido' %}color-viaje
                             {% elif bus.estado == 'Demorado' %}color-demorado
                             {% elif bus.estado == 'Finalizado' %}color-finalizado
+                            {% elif bus.estado == 'Cancelado' %}color-cancelado
                             {% else %}color-reset{% endif %}">
-                            <span id="texto-estado-{{ bus.id }}">{{ bus.estado }}</span>
+                            
+                            <span id="texto-estado-{{ bus.tipo }}-{{ bus.id }}">{{ bus.estado }}</span>
                         </div>
 
-                        <div class="row g-2">
+                            <div class="row g-1"> 
                             <div class="col-6">
                                 <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'En Andén', 'color-anden')" class="btn btn-operador-fijo">
                                     <i class="bi bi-megaphone"></i> Andén
@@ -238,22 +269,39 @@
                                     <i class="bi bi-play-fill"></i> Viaje
                                 </button>
                             </div>
-                            <div class="col-12">
+
+                            <div class="col-6">
                                 <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Demorado', 'color-demorado')" class="btn btn-operador-fijo">
                                     <i class="bi bi-clock-history"></i> Demora
                                 </button>
                             </div>
-                            <div class="col-12">
+                            <div class="col-6">
                                 <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Finalizado', 'color-finalizado')" class="btn btn-operador-fijo">
                                     <i class="bi bi-check-circle-fill"></i> Finalizado
                                 </button>
                             </div>
-                            <div class="col-12">
-                                <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Programado', 'color-reset')" class="btn btn-operador-fijo bg-secondary">
+
+                            <div class="col-6">
+                                <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Programado', 'color-reset')" class="btn btn-operador-fijo">
                                     <span class="text-dark fw-bold">
-                                    <i class="bi bi-arrow-counterclockwise"></i> Resetear a Programado
+                                        <i class="bi bi-arrow-counterclockwise"></i> Resetear
+                                    </span>
                                 </button>
                             </div>
+                            <div class="col-6">
+                                <button onclick="cambiarEstado('{{ bus.id }}', '{{ bus.tipo }}', 'Cancelado', 'color-cancelado')" class="btn btn-operador-fijo">
+                                    <i class="bi bi-x-circle-fill"></i> Cancelado
+                                </button>
+                            </div>
+
+                            <div class="col-12 mt-1"> 
+                                <button class="btn btn-outline-dark w-100 fw-bold bg-secondary" 
+                                        style="padding: 6px 0; font-size: 0.85rem; border-radius: 6px;"
+                                        onclick="abrirVerificacion('{{ bus.id }}', '{{ bus.tipo }}', '{{ bus.anden }}')">
+                                    <i class="bi bi-shield-check me-2"></i>Verificar Bus
+                                </button>
+                            </div>
+
                         </div>
                     </div>
 
@@ -263,14 +311,238 @@
         {% else %}
         <div class="col-12 text-center py-5 mt-5">
             <h4 class="text-muted fw-bold">No hay recorridos programados.</h4>
-            <p class="text-muted">El sistema muestra 2 horas antes y 10 horas después.</p>
         </div>
         {% endfor %}
     </div>
 </div>
+<div class="modal fade" id="modalVerificar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-shield-lock-fill me-2"></i>Control de Andén</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <form id="formVerificacion">
+                    <input type="hidden" id="verif_id" name="id_recorrido">
+                    <input type="hidden" id="verif_tipo" name="tipo_recorrido">
+                    
+                    <div class="row g-3">
+                        <div class="col-12 text-center mb-2">
+                            <span class="badge bg-secondary fs-6">Andén Programado: <span id="verif_anden_prog"></span></span>
+                        </div>
 
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Patente del Bus</label>
+                            <input type="text" name="patente" class="form-control form-control-lg text-center text-uppercase fw-bold border-primary" 
+                                   placeholder="ABCD12" required autocomplete="off" id="inputPatente">
+                        </div>
+
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Fecha Ingreso</label>
+                            <input type="date" name="fecha_manual" id="inputFecha" class="form-control text-center fw-bold" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Hora Ingreso</label>
+                            <input type="time" name="hora_manual" id="inputHora" class="form-control text-center fw-bold" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Andén Real</label>
+                            <input type="number" name="anden_real" id="verif_anden_real" class="form-control text-center fw-bold" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Observaciones (Opcional)</label>
+                            <textarea name="observaciones" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="resultadoVerificacion" class="mt-3 d-none">
+                    <div class="alert" role="alert">
+                        <h6 class="alert-heading fw-bold" id="resTitulo"></h6>
+                        <p class="mb-0 small" id="resMensaje"></p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success fw-bold px-4" onclick="enviarVerificacion()">
+                    <i class="bi bi-check-lg me-2"></i>Registrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalBusExtra" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="bi me-2"></i>Registrar Bus Extra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                
+                <div class="alert alert-light border small text-muted mb-3">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    Ingrese todos los datos manuales. Si la patente llega a estar verificada por el administrador, la empresa se corregirá sola.
+                </div>
+
+                <form id="formBusExtra" onsubmit="event.preventDefault(); enviarBusExtra();">
+                    
+                    <div class="row mb-2">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Fecha</label>
+                            <input type="date" name="fecha_manual" id="extraFecha" class="form-control text-center fw-bold" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Hora</label>
+                            <input type="time" name="hora_manual" id="extraHora" class="form-control text-center fw-bold" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Patente</label>
+                        <input type="text" name="patente" id="extraPatente"
+                               class="form-control form-control-lg text-uppercase fw-bold text-center border-warning" 
+                               required minlength="4" maxlength="10"
+                               placeholder="AAAA12" autocomplete="off">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Empresa</label>
+                        <input class="form-control" list="sugerencias_empresas" name="empresa_manual" 
+                               placeholder="Escriba o seleccione..." autocomplete="off">
+                        
+                        <datalist id="sugerencias_empresas">
+                            {% for emp in empresas %}
+                                <option value="{{ emp }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Lugar / Origen / Destino</label>
+                        <input class="form-control" list="sugerencias_lugares" name="lugar_manual" 
+                               placeholder="Ej: COYHAIQUE, AYSEN..." required autocomplete="off">
+                        
+                        <datalist id="sugerencias_lugares">
+                            {% for lug in lugares %}
+                                <option value="{{ lug }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Tipo</label>
+                            <select name="tipo" class="form-select" required>
+                                <option value="salidas">Salida</option>
+                                <option value="llegadas">Llegada</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Andén</label>
+                            <select name="anden" class="form-select text-center fw-bold" required>
+                                <option value="1">1</option> <option value="2">2</option>
+                                <option value="3">3</option> <option value="4">4</option>
+                                <option value="5">5</option> <option value="6">6</option>
+                                <option value="7">7</option> <option value="8">8</option>
+                                <option value="9">9</option> <option value="10">10</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Observación</label>
+                        <input type="text" name="observacion" class="form-control" placeholder="Ej: Bus nunca visto...">
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-dark fw-bold">Guardar Registro</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalResultadoExtra" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content text-center">
+            <div class="modal-body p-4">
+                <div id="iconoResultado" class="display-1 mb-2"></div>
+                <h5 id="tituloResultado" class="fw-bold mb-3"></h5>
+                <p id="mensajeResultado" class="small text-muted mb-4"></p>
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+// FUNCIÓN PARA ENVIAR EL BUS EXTRA
+// 1. EVENTO PARA RELLENAR FECHA/HORA AL ABRIR EL MODAL
+const modalBusExtraEl = document.getElementById('modalBusExtra');
+if (modalBusExtraEl) {
+    modalBusExtraEl.addEventListener('show.bs.modal', function () {
+        // Poner fecha de hoy
+        document.getElementById('extraFecha').valueAsDate = new Date();
+        
+        // Poner hora actual
+        const ahora = new Date();
+        const hh = String(ahora.getHours()).padStart(2, '0');
+        const min = String(ahora.getMinutes()).padStart(2, '0');
+        document.getElementById('extraHora').value = `${hh}:${min}`;
+        
+        // Enfocar patente
+        setTimeout(() => document.getElementById('extraPatente').focus(), 500);
+    });
+}
+
+// 2. FUNCIÓN DE ENVÍO CORREGIDA
+function enviarBusExtra() {
+    const form = document.getElementById('formBusExtra');
+    if(!form.checkValidity()) { form.reportValidity(); return; }
+
+    const formData = new FormData(form);
+
+    // Ocultamos el formulario
+    bootstrap.Modal.getInstance(document.getElementById('modalBusExtra')).hide();
+
+    fetch('/operador/registrar_extra', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        // Configurar el modal de resultado SIMPLE (no el de verificar)
+        const icono = document.getElementById('iconoResultado');
+        const titulo = document.getElementById('tituloResultado');
+        const mensaje = document.getElementById('mensajeResultado');
+
+        titulo.innerText = data.title;
+        mensaje.innerText = data.message;
+
+        if (data.status === 'success') {
+            icono.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i>';
+            form.reset(); // Limpiar solo si fue éxito
+        } else if (data.status === 'warning') {
+            icono.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning"></i>';
+            form.reset();
+        } else {
+            icono.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i>';
+        }
+
+        // Mostrar resultado visual
+        new bootstrap.Modal(document.getElementById('modalResultadoExtra')).show();
+    })
+    .catch(error => {
+        alert("Error de conexión con el servidor");
+    });
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
     let tipoActual = 'todos'; 
 
@@ -327,8 +599,10 @@
         .then(data => {
             document.body.style.cursor = 'default';
             if (data.status === 'success') {
-                const texto = document.getElementById('texto-estado-' + id);
-                const box = document.getElementById('box-estado-' + id);
+                // --- CAMBIO AQUÍ: Usamos tipo + id para encontrar la caja única ---
+                const texto = document.getElementById('texto-estado-' + tipo + '-' + id);
+                const box = document.getElementById('box-estado-' + tipo + '-' + id);
+                // ------------------------------------------------------------------
                 
                 if (texto && box) {
                     texto.innerText = nuevoEstado;
@@ -352,6 +626,104 @@
         el.addEventListener('click', () => clearTimeout(timer));
         el.addEventListener('keyup', () => clearTimeout(timer));
     });
+    // --- LÓGICA DE VERIFICACIÓN ---
+
+function abrirVerificacion(id, tipo, andenProg) {
+        // 1. Limpiar el formulario
+        document.getElementById('formVerificacion').reset();
+        document.getElementById('resultadoVerificacion').classList.add('d-none');
+        
+        // 2. Cargar datos del bus
+        document.getElementById('verif_id').value = id;
+        document.getElementById('verif_tipo').value = tipo;
+        document.getElementById('verif_anden_prog').innerText = andenProg;
+        
+        // 3. Pre-llenar el andén
+        document.getElementById('verif_anden_real').value = andenProg;
+
+        //fecha de hoy automáticamente en el input type="date"
+        document.getElementById('inputFecha').valueAsDate = new Date(); 
+
+
+        // Como 'valueAsDate' no funciona directo para la hora, calculamos la hora actual
+        const ahora = new Date();
+        const hh = String(ahora.getHours()).padStart(2, '0');
+        const min = String(ahora.getMinutes()).padStart(2, '0');
+        document.getElementById('inputHora').value = `${hh}:${min}`;
+        // -------------------------------------------------------
+        
+        // 4. Enfocar
+        setTimeout(() => {
+            document.getElementById('inputPatente').focus();
+        }, 500);
+
+        // 5. Mostrar modal
+        new bootstrap.Modal(document.getElementById('modalVerificar')).show();
+    }
+
+function enviarVerificacion() {
+        const form = document.getElementById('formVerificacion');
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+
+        const formData = new FormData(form);
+        const areaResultado = document.getElementById('resultadoVerificacion');
+        const alerta = areaResultado.querySelector('.alert');
+        
+        areaResultado.classList.add('d-none');
+
+        fetch('/operador/verificar', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            areaResultado.classList.remove('d-none');
+            alerta.className = 'alert'; 
+            
+            // MODIFICACIÓN CLAVE: Aceptamos 'success', 'warning' Y TAMBIÉN 'error'
+            // (Porque 'error' es lo que devuelve cuando la patente no está registrada)
+            if (data.status === 'success' || data.status === 'warning' || data.status === 'error') {
+                
+                // 1. Elegimos el color de la alerta
+                if (data.status === 'success') alerta.classList.add('alert-success');
+                else if (data.status === 'warning') alerta.classList.add('alert-warning');
+                else alerta.classList.add('alert-danger'); // Rojo para patente no registrada
+
+                // 2. ACTUALIZACIÓN VISUAL (Ahora se ejecuta siempre)
+                const id = document.getElementById('verif_id').value;
+                const tipo = document.getElementById('verif_tipo').value;
+
+                const idCaja = 'box-estado-' + tipo + '-' + id;
+                const idTexto = 'texto-estado-' + tipo + '-' + id;
+
+                const box = document.getElementById(idCaja);
+                const texto = document.getElementById(idTexto);
+
+                if (box && texto) {
+                    texto.innerText = "En Andén";
+                    box.classList.remove('color-viaje', 'color-demorado', 'color-reset', 'color-finalizado', 'color-cancelado');
+                    box.classList.add('color-anden');
+                }
+
+                // 3. Cerrar modal automático (incluso si es error de patente)
+                // Si prefieres que se quede abierto para ver el error, borra este setTimeout
+                setTimeout(() => { 
+                    bootstrap.Modal.getInstance(document.getElementById('modalVerificar')).hide(); 
+                }, 2000); 
+
+            } else {
+                // Solo para errores graves de conexión o servidor que no devuelvan JSON esperado
+                alerta.classList.add('alert-danger');
+            }
+
+            document.getElementById('resTitulo').innerText = data.title;
+            document.getElementById('resMensaje').innerText = data.message;
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Error de conexión");
+        });
+    }
 </script>
 </body>
 </html>

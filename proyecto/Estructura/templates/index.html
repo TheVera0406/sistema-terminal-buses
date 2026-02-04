@@ -156,11 +156,59 @@
         }
         
         /* Colores de estados */
-        .est-anden { background-color: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; animation: parpadeo 1.5s infinite; }
-        .est-viaje { background-color: #e3f2fd; color: #1565c0; border: 2px solid #bbdefb; animation: parpadeo 1.5s infinite; }
-        .est-demora { background-color: #fff3e0; color: #ef6c00; border: 2px solid #ffe0b2; animation: parpadeo 1.5s infinite; }
-        .est-finalizado { background-color: #ffdede; color: #da4949; border: 2px solid #da4949; animation: parpadeo 1.5s infinite;}
+/* --- COLORES DE ESTADOS (SEGÚN PALETA) --- */
         
+        /* 1. En Andén (Verde - Todo OK) */
+        .est-anden { 
+            background-color: #d1e7dd; 
+            color: #0f5132; 
+            border: 2px solid #badbcc; 
+            animation: parpadeo 1.5s infinite; 
+        }
+        
+        /* 2. En Recorrido (Azul - Información) */
+        .est-viaje { 
+            background-color: #cfe2ff; 
+            color: #084298; 
+            border: 2px solid #b6d4fe; 
+            animation: parpadeo 1.5s infinite; 
+        }
+        
+        /* 3. Demorado (Amarillo/Naranja - Alerta) */
+        .est-demora { 
+            background-color: #fff3cd; 
+            color: #664d03; 
+            border: 2px solid #ffecb5; 
+            animation: parpadeo 1.5s infinite; 
+        }
+        
+        /* 4. Finalizado (Rojo Suave / Vino - Terminó) */
+        .est-finalizado { 
+            background-color: #f8d7da; 
+            color: #842029; /* Tono vino */
+            border: 2px solid #f5c2c7; 
+            animation: parpadeo 1.5s infinite;
+        }
+        
+        /* 6. CANCELADO (Gris Oscuro / Negro - Muerto) */
+        .est-cancelado { 
+            background-color: #212529; /* Casi negro */
+            color: #ffffff; 
+            border: 2px solid #000000; 
+            animation: parpadeo 1.5s infinite; 
+        }
+
+        /* 5. Programado (Gris Claro - Espera) */
+        .est-normal { 
+            color: #6c757d; 
+            font-weight: 700; 
+            font-size: 0.85rem; 
+            background-color: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
         .est-normal { color: #999; font-weight: 600; font-size: 0.8rem; }
 
         @keyframes parpadeo { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
@@ -258,6 +306,8 @@
                                         <span class="badge-estado est-demora">Demorado</span>
                                     {% elif fila[6] == 'Finalizado' %}
                                         <span class="badge-estado est-finalizado">Finalizado</span>
+                                    {% elif fila[6] == 'Cancelado' %}
+                                        <span class="badge-estado est-cancelado">Cancelado</span>
                                     {% else %}
                                         <span class="est-normal">Programado</span>
                                     {% endif %}
@@ -307,6 +357,8 @@
                                         <span class="badge-estado est-demora">Demorado</span>
                                     {% elif fila[6] == 'Finalizado' %}
                                         <span class="badge-estado est-finalizado">Finalizado</span>
+                                    {% elif fila[6] == 'Cancelado' %}
+                                        <span class="badge-estado est-cancelado">Cancelado</span>  
                                     {% else %}
                                         <span class="est-normal">Programado</span>
                                     {% endif %}
