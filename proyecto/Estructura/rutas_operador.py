@@ -126,7 +126,7 @@ def panel_operador():
     cur.close()
     conn.close()
 
-    # 6. ORDENAR CRONOLÓGICAMENTE (Clave: Fecha primero, luego Hora)
+    # 6. ORDENAR CRONOLÓGICAMENTE (Fecha primero, luego LA Hora)
     # Esto asegura que las 23:00 de HOY salgan antes que las 00:30 de MAÑANA
     recorridos.sort(key=lambda x: (x['fecha_raw'], x['hora']))
     
@@ -216,7 +216,6 @@ def verificar_recorrido():
         es_anden_correcto = (str(anden_real) == anden_programado)
 
         # 4. GUARDAR EN BD (Usando las nuevas columnas)
-# ... (código de inserción anterior igual) ...
 
         cur.execute("""
             INSERT INTO historial_verificaciones 
@@ -228,7 +227,6 @@ def verificar_recorrido():
               es_patente_valida, es_anden_correcto, anden_programado, observaciones,
               fecha_manual, hora_manual))
         
-        # --- AGREGA ESTA LÍNEA NUEVA ---
         # Esto guarda el estado "En Andén" en la base de datos
         cur.execute(f"UPDATE {tabla_db} SET estado = 'En Andén' WHERE id = %s", (recorrido_id,))
         # -------------------------------
@@ -240,11 +238,11 @@ def verificar_recorrido():
 
         # 5. Respuesta
         if not es_patente_valida:
-            return jsonify({'status': 'error', 'title': '🚨 BUS NO AUTORIZADO', 'message': f'Patente {patente_input} no permitida.'})
+            return jsonify({'status': 'error', 'title': 'BUS NO AUTORIZADO', 'message': f'Patente {patente_input} no permitida.'})
         elif not es_anden_correcto:
-            return jsonify({'status': 'warning', 'title': '⚠️ ANDÉN INCORRECTO', 'message': f'Andén {anden_real} incorrecto (Debía ser {anden_programado}).'})
+            return jsonify({'status': 'warning', 'title': 'ANDÉN INCORRECTO', 'message': f'Andén {anden_real} incorrecto (Debía ser {anden_programado}).'})
         else:
-            return jsonify({'status': 'success', 'title': '✅ REGISTRADO', 'message': 'Datos guardados correctamente.'})
+            return jsonify({'status': 'success', 'title': 'REGISTRADO', 'message': 'Datos guardados correctamente.'})
 
     except Exception as e:
         print(f"Error Verificación: {e}")
@@ -277,7 +275,7 @@ def registrar_extra():
     cur = conn.cursor()
 
     try:
-        # Validar Empresa (Mantenemos la lógica de corrección de nombre de empresa)
+        # Validar Empresa (corrección de nombre de empresa)
         cur.execute("SELECT empresa FROM buses_permitidos WHERE patente = %s", (patente,))
         res_patente = cur.fetchone()
         
@@ -290,10 +288,6 @@ def registrar_extra():
         else:
             if not empresa_final: empresa_final = "NO REGISTRADA"
 
-        # --- CAMBIO AQUÍ ---
-        # Eliminamos el bloque "if not observacion: ..."
-        # Ahora, si 'observacion' está vacía, se guarda vacía en la base de datos.
-        # -------------------
 
         cur.execute("""
             INSERT INTO historial_extras 
@@ -303,7 +297,7 @@ def registrar_extra():
         
         conn.commit()
         
-        titulo = "✅ EXTRA GUARDADO"
+        titulo = "EXTRA GUARDADO"
         mensaje = f"Bus {patente} ({empresa_final}) registrado."
         status = 'success' if es_conocida else 'warning'
 

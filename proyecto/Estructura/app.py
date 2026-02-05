@@ -67,9 +67,9 @@ def load_user(user_id):
     return None
 
 
-# ==============================================================================
+
 # RUTA PÚBLICA (PANTALLA TV) - LÓGICA CONTINUIDAD MADRUGADA
-# ==============================================================================
+
 
 def obtener_datos_filtrados(tabla):
     conn = obtener_conexion()
@@ -125,12 +125,11 @@ def inicio():
                            salidas=salidas, 
                            noticias_db=noticias)
 
-# ==============================================================================
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # 1. CAMBIO: Recibimos 'rut' en lugar de 'username' del formulario HTML
+        # 1. Recibimos 'rut' en lugar de 'username' del formulario HTML
         rut_ingresado = request.form['rut'] 
         clave = request.form['password']
         
@@ -138,7 +137,7 @@ def login():
         if conn:
             cur = conn.cursor()
             
-            # 2. CAMBIO: Buscamos por RUT en el WHERE
+            # 2. Buscamos por RUT en el WHERE
             # (Seguimos trayendo el username en el SELECT para mostrarlo después)
             cur.execute("SELECT id, username, password, rol, activo, rut FROM usuarios WHERE rut = %s", (rut_ingresado,))
             user_data = cur.fetchone()

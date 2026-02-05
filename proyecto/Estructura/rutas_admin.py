@@ -225,6 +225,49 @@ def importar_excel():
                     else:
                         flash(msg, "danger")
                 # -------------------------------
+
+                # --- NUEVO: SINCRONIZACIÓN AUTOMÁTICA TRAS IMPORTACIÓN ---
+                if exito_db:
+                    try:
+                        conn_sync = obtener_conexion_admin()
+                        cur_sync = conn_sync.cursor()
+                        
+                        # 1. Insertar empresas nuevas faltantes
+                        cur_sync.execute("""
+                            INSERT INTO empresas (nombre)
+                            SELECT DISTINCT empresa_nombre FROM import_llegadas 
+                            WHERE empresa_nombre IS NOT NULL AND empresa_nombre != ''
+                            AND empresa_nombre NOT IN (SELECT nombre FROM empresas);
+                        """)
+                        cur_sync.execute("""
+                            INSERT INTO empresas (nombre)
+                            SELECT DISTINCT empresa_nombre FROM import_salidas 
+                            WHERE empresa_nombre IS NOT NULL AND empresa_nombre != ''
+                            AND empresa_nombre NOT IN (SELECT nombre FROM empresas);
+                        """)
+                        
+                        # 2. Insertar lugares nuevos faltantes
+                        cur_sync.execute("""
+                            INSERT INTO lugares (nombre)
+                            SELECT DISTINCT lugar FROM import_llegadas 
+                            WHERE lugar IS NOT NULL AND lugar != '' 
+                            AND lugar NOT IN (SELECT nombre FROM lugares);
+                        """)
+                        cur_sync.execute("""
+                            INSERT INTO lugares (nombre)
+                            SELECT DISTINCT lugar FROM import_salidas 
+                            WHERE lugar IS NOT NULL AND lugar != ''
+                            AND lugar NOT IN (SELECT nombre FROM lugares);
+                        """)
+
+                        conn_sync.commit()
+                        cur_sync.close()
+                        conn_sync.close()
+                        flash("Empresas y Lugares nuevos detectados en el Excel han sido registrados.", "info")
+                    except Exception as e:
+                        print(f"Error en sincronización automática: {e}")
+                # ---------------------------------------------------------
+
             else:
                 flash("No se pudieron extraer datos válidos de los archivos.", "danger")
         else:
@@ -236,6 +279,7 @@ def importar_excel():
         if os.path.exists(carpeta_temp): shutil.rmtree(carpeta_temp)
         
     return redirect(url_for('admin_bp.admin_panel'))
+
 
 # --- ELIMINAR UNO SOLO ---
 @admin_bp.route('/admin/eliminar/<tipo>/<int:id>')
@@ -274,6 +318,21 @@ def editar_registro():
     cur = conn.cursor()
 
     try:
+        # --- NUEVO: SINCRONIZACIÓN AUTOMÁTICA ---
+        # Si la empresa no existe en la tabla maestra, la creamos
+        if empresa:
+            cur.execute("SELECT id FROM empresas WHERE nombre = %s", (empresa,))
+            if not cur.fetchone():
+                cur.execute("INSERT INTO empresas (nombre) VALUES (%s)", (empresa,))
+                flash(f"Nueva empresa '{empresa}' registrada en el sistema.", "info")
+        
+        # Si el lugar no existe en la tabla maestra, lo creamos
+        if lugar:
+             cur.execute("SELECT id FROM lugares WHERE nombre = %s", (lugar,))
+             if not cur.fetchone():
+                 cur.execute("INSERT INTO lugares (nombre) VALUES (%s)", (lugar,))
+        # ----------------------------------------
+
         if id_reg == '0':
             cur.execute(f"""
                 INSERT INTO {tabla} (fecha, hora, empresa_nombre, lugar, anden, estado)
@@ -299,9 +358,6 @@ def editar_registro():
         conn.close()
 
     return redirect(url_for('admin_bp.admin_panel'))
-
-
-# NUEVAS RUTAS PARA GESTIÓN DE NOTICIAS
 
 
 # --- EDITAR TEXTO DE NOTICIA ---
@@ -453,8 +509,6 @@ def eliminar_maestro():
 
 
 # GESTIÓN DE USUARIOS (CRUD)
-
-
 # --- CREAR USUARIO ---
 @admin_bp.route('/admin/usuarios/crear', methods=['POST'])
 @login_required
@@ -747,7 +801,7 @@ def exportar_excel_rango():
     conn = obtener_conexion_admin()
     cur = conn.cursor()
 
-    # CORRECCIÓN: Hacemos LEFT JOIN condicionales a 'import_salidas' y 'import_llegadas'
+    # LEFT JOIN condicionales a 'import_salidas' y 'import_llegadas'
     query = """
         SELECT 
             h.id,
@@ -849,7 +903,7 @@ def exportar_excel_rango():
         download_name=f"Reporte_OFICIAL_{f_inicio}_al_{f_fin}.xlsx",
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-# --- REPORTE DE EXTRAS (Formato Personalizado) ---
+# --- REPORTE DE EXTRAS ---
 @admin_bp.route('/admin/reporte_extras_rango', methods=['POST'])
 @login_required
 def reporte_extras_rango():
@@ -861,7 +915,7 @@ def reporte_extras_rango():
     conn = obtener_conexion_admin()
     cur = conn.cursor()
 
-    # CONSULTA SQL
+
     # 1. Hacemos LEFT JOIN con 'buses_permitidos' para ver si la placa es válida
     query = """
         SELECT 

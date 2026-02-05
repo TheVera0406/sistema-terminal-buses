@@ -14,7 +14,7 @@
     <style>
         :root {
             --admin-fondo: #f4f6f9;
-            --admin-navbar: #002b3f; /* Tu color morado */
+            --admin-navbar: #002b3f; 
             --admin-btn-primario: #0d6efd;
         }
 
@@ -954,9 +954,8 @@
         }
     });
 
-    // =======================================================
     // NUEVAS FUNCIONES PARA NOTICIAS (Check y Editar)
-    // =======================================================
+
     function abrirEditarNoticia(id) {
         // Cargar texto actual
         const textoActual = document.getElementById('contenido-noticia-' + id).innerText;
@@ -1000,7 +999,7 @@
         document.getElementById('edit_username').value = username;
         document.getElementById('edit_rol').value = rol;
         
-        // NUEVO: Asignamos el RUT al campo del modal
+        // Asignamos el RUT al campo del modal
         // Asegúrate de que el input tenga id="edit_rut"
         const inputRut = document.getElementById('edit_rut');
         if(inputRut) inputRut.value = rut; 
@@ -1033,7 +1032,6 @@
         .then(data => {
             checkbox.disabled = false;
             if(data.status === 'success') {
-                // Opcional: Mostrar un toast o mensaje pequeño de éxito
                 console.log("Estado actualizado correctamente");
             } else {
                 alert("Error: " + (data.message || "No se pudo actualizar"));

@@ -86,7 +86,6 @@ def ejecutar_insercion_datos(carpeta_uploads):
         
         conn.close()
         
-        # Mensajes sin emojis (según tu configuración anterior)
         if ins_llegadas > 0:
             mensajes.append(f"Éxito: {ins_llegadas} nuevas llegadas insertadas.")
         if dup_llegadas > 0:

@@ -13,14 +13,13 @@
 
     <style>
         :root {
-            --operador-navbar: #002b3f; /* Azul Corporativo */
+            --operador-navbar: #002b3f; 
             --operador-fondo: #f4f6f9;
         }
 
         body { 
             background-color: var(--operador-fondo); 
             font-family: 'Poppins', sans-serif; 
-            /* CORRECCIÓN: Eliminamos font-size: 0.85rem para que tenga el tamaño normal del Admin */
             padding-top: 300px; /* Espacio reservado para el encabezado fijo */
         }
 
@@ -29,11 +28,11 @@
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 1030;
-            background-color: var(--operador-fondo); /* Fondo para tapar el contenido al hacer scroll */
+            background-color: var(--operador-fondo); 
             padding-bottom: 10px;
         }
 
-        /* --- BLOQUE 1: NAVBAR (Igual al Admin) --- */
+        /* --- BLOQUE 1: NAVBAR --- */
         .navbar-operador {
             background-color: var(--operador-navbar);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -41,14 +40,14 @@
             padding-bottom: 0.5rem;
         }
 
-        /* --- BLOQUE 2: TARJETA DE FILTROS (Igual al Admin) --- */
+        /* --- BLOQUE 2: TARJETA DE FILTROS --- */
         .card-filtros {
             background-color: var(--operador-navbar);
             border: none;
-            border-radius: 15px; /* Bordes redondeados como en Admin */
+            border-radius: 15px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             padding: 1rem;
-            margin-top: 1.5rem; /* Separación igual a Admin */
+            margin-top: 1.5rem; 
         }
 
         /* --- NAVEGACIÓN (TABS) --- */
@@ -90,19 +89,19 @@
         }
         .color-anden { color: #0f5132; background-color: #d1e7dd; border: 1px solid #badbcc; }      
         
-        /* 2. Azul */
+
         .color-viaje { color: #084298; background-color: #cfe2ff; border: 1px solid #b6d4fe; }      
         
-        /* 3. Amarillo/Naranja */
+
         .color-demorado { color: #664d03; background-color: #fff3cd; border: 1px solid #ffecb5; }
         
-        /* 4. Rojo Vino */
+
         .color-finalizado { color: #842029; background-color: #f8d7da; border: 1px solid #f5c2c7; }
         
-        /* 6. Gris Oscuro (Cancelado) */
+
         .color-cancelado { color: #ffffff; background-color: #5e5e5e; border: 1px solid #000000; }
 
-        /* 5. Gris Claro (Reset/Programado) */
+
         .color-reset { color: #6c757d; background-color: #f8f9fa; border: 1px solid #dee2e6; }
 
         
@@ -500,7 +499,7 @@ if (modalBusExtraEl) {
     });
 }
 
-// 2. FUNCIÓN DE ENVÍO CORREGIDA
+// 2. FUNCIÓN DE ENVÍO
 function enviarBusExtra() {
     const form = document.getElementById('formBusExtra');
     if(!form.checkValidity()) { form.reportValidity(); return; }
@@ -599,7 +598,7 @@ function enviarBusExtra() {
         .then(data => {
             document.body.style.cursor = 'default';
             if (data.status === 'success') {
-                // --- CAMBIO AQUÍ: Usamos tipo + id para encontrar la caja única ---
+                // Usamos tipo + id para encontrar la caja única ---
                 const texto = document.getElementById('texto-estado-' + tipo + '-' + id);
                 const box = document.getElementById('box-estado-' + tipo + '-' + id);
                 // ------------------------------------------------------------------
@@ -706,7 +705,7 @@ function enviarVerificacion() {
                 }
 
                 // 3. Cerrar modal automático (incluso si es error de patente)
-                // Si prefieres que se quede abierto para ver el error, borra este setTimeout
+                // borrar el setTimeout para que no se cierre la pestaña
                 setTimeout(() => { 
                     bootstrap.Modal.getInstance(document.getElementById('modalVerificar')).hide(); 
                 }, 2000); 

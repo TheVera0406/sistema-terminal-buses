@@ -24,7 +24,7 @@ def obtener_conexion_usuario():
         return None
 
 
-# RUTA PRINCIPAL: CONSULTA DE RECORRIDOS (PÚBLICA)
+#CONSULTA DE RECORRIDOS (PÚBLICA)
 
 @usuario_bp.route('/')
 def dashboard():
@@ -95,7 +95,7 @@ def dashboard():
     total_llegadas = cur.fetchone()[0]
     paginas_llegadas = math.ceil(total_llegadas / por_pagina)
     
-    # Se agregó 'estado' al SELECT
+    # 'estado' al SELECT
     sql_llegadas = f"""
         SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
         FROM import_llegadas 
@@ -110,7 +110,7 @@ def dashboard():
     total_salidas = cur.fetchone()[0]
     paginas_salidas = math.ceil(total_salidas / por_pagina)
 
-    # Se agregó 'estado' al SELECT
+    # 'estado' al SELECT
     sql_salidas = f"""
         SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
         FROM import_salidas 
