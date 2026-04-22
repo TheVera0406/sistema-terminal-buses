@@ -78,7 +78,7 @@ def obtener_datos_filtrados(tabla):
     cur = conn.cursor()
     
     # 2. DEFINIR ZONA HORARIA CHILE
-    tz_chile = pytz.timezone('America/Santiago')
+    tz_chile = pytz.timezone('America/Punta_Arenas')  # Zona horaria de Chile (Punta Arenas)
     ahora_chile = datetime.now(tz_chile)
     
     # 3. USAR LA HORA CHILENA PARA LOS CÁLCULOS
@@ -120,10 +120,16 @@ def inicio():
     if not noticias:
         noticias = ["Bienvenido al Terminal de Buses de Coyhaique"]
 
+    # Hora del servidor en Punta Arenas para el reloj del frontend
+    tz_chile = pytz.timezone('America/Punta_Arenas')
+    ahora_servidor = datetime.now(tz_chile)
+    hora_servidor_iso = ahora_servidor.strftime('%Y-%m-%dT%H:%M:%S')
+
     return render_template('index.html', 
                            llegadas=llegadas, 
                            salidas=salidas, 
-                           noticias_db=noticias)
+                           noticias_db=noticias,
+                           hora_servidor=hora_servidor_iso)
 
 
 @app.route('/login', methods=['GET', 'POST'])

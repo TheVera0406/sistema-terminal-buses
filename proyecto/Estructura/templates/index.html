@@ -383,12 +383,28 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        /* RELOJ */
+        /* RELOJ - basado en hora del servidor (Punta Arenas) */
+        // Hora base enviada por el servidor al cargar la página
+        let horaBase = new Date('{{ hora_servidor }}');
+        // Momento exacto en que llegó la página al navegador
+        const tickInicio = Date.now();
+
         function actualizarReloj() {
-            const ahora = new Date();
-            const opcionesFecha = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            // Calcular cuántos ms han pasado desde que cargó la página
+            const msPasados = Date.now() - tickInicio;
+            const ahora = new Date(horaBase.getTime() + msPasados);
+
+            const opcionesFecha = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
             document.getElementById('fecha-hoy').textContent = ahora.toLocaleDateString('es-ES', opcionesFecha);
-            document.getElementById('reloj').textContent = ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            document.getElementById('reloj').textContent =
+                String(ahora.getHours()).padStart(2, '0') + ':' +
+                String(ahora.getMinutes()).padStart(2, '0') + ':' +
+                String(ahora.getSeconds()).padStart(2, '0');
         }
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
