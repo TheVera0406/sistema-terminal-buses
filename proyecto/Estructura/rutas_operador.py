@@ -39,7 +39,7 @@ def panel_operador():
     cur = conn.cursor()
     
     # 2. DEFINIR ZONA HORARIA CHILE
-    tz_chile = pytz.timezone('America/Santiago')
+    tz_chile = pytz.timezone('America/Punta_Arenas')
     ahora_chile = datetime.now(tz_chile)
     
     # 3. USAR HORA CHILENA COMO BASE
@@ -214,6 +214,29 @@ def verificar_recorrido():
              
         anden_programado = str(resultado_origen[0])
         es_anden_correcto = (str(anden_real) == anden_programado)
+
+        # Bloquea re-registro del mismo recorrido (ya controlado una vez)
+        cur.execute("""
+            SELECT patente_ingresada, fecha_manual, hora_manual
+            FROM historial_verificaciones
+            WHERE recorrido_id = %s
+              AND tipo_recorrido = %s
+            ORDER BY id DESC
+            LIMIT 1
+        """, (recorrido_id, tipo))
+
+        registro_existente = cur.fetchone()
+        if registro_existente:
+            patente_existente = registro_existente[0]
+            fecha_existente = registro_existente[1].strftime('%d/%m/%Y') if registro_existente[1] else 's/f'
+            hora_existente = registro_existente[2].strftime('%H:%M') if registro_existente[2] else 's/h'
+            cur.close()
+            conn.close()
+            return jsonify({
+                'status': 'warning',
+                'title': 'YA REGISTRADO',
+                'message': f'Este recorrido ya fue registrado con la patente {patente_existente} ({fecha_existente} {hora_existente}).'
+            })
 
         # 4. GUARDAR EN BD (Usando las nuevas columnas)
 

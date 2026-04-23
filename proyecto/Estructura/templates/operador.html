@@ -368,7 +368,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-success fw-bold px-4" onclick="enviarVerificacion()">
+                <button type="button" id="btnRegistrarVerificacion" class="btn btn-success fw-bold px-4" onclick="enviarVerificacion()">
                     <i class="bi bi-check-lg me-2"></i>Registrar
                 </button>
             </div>
@@ -664,6 +664,10 @@ function enviarVerificacion() {
         const form = document.getElementById('formVerificacion');
         if (!form.checkValidity()) { form.reportValidity(); return; }
 
+    const btnRegistrar = document.getElementById('btnRegistrarVerificacion');
+    if (btnRegistrar.disabled) return;
+    btnRegistrar.disabled = true;
+
         const formData = new FormData(form);
         const areaResultado = document.getElementById('resultadoVerificacion');
         const alerta = areaResultado.querySelector('.alert');
@@ -708,7 +712,7 @@ function enviarVerificacion() {
                 // borrar el setTimeout para que no se cierre la pestaña
                 setTimeout(() => { 
                     bootstrap.Modal.getInstance(document.getElementById('modalVerificar')).hide(); 
-                }, 2000); 
+                }, 4000); 
 
             } else {
                 // Solo para errores graves de conexión o servidor que no devuelvan JSON esperado
@@ -717,10 +721,12 @@ function enviarVerificacion() {
 
             document.getElementById('resTitulo').innerText = data.title;
             document.getElementById('resMensaje').innerText = data.message;
+            btnRegistrar.disabled = false;
         })
         .catch(error => {
             console.error(error);
             alert("Error de conexión");
+            btnRegistrar.disabled = false;
         });
     }
 </script>

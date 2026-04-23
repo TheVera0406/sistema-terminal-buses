@@ -74,29 +74,44 @@ def load_user(user_id):
 def obtener_datos_filtrados(tabla):
     conn = obtener_conexion()
     if not conn: return []
-    
+
     cur = conn.cursor()
-    
-    # 2. DEFINIR ZONA HORARIA CHILE
-    tz_chile = pytz.timezone('America/Punta_Arenas')  # Zona horaria de Chile (Punta Arenas)
+
+    # ZONA HORARIA PUNTA ARENAS (GMT-3)
+    tz_chile = pytz.timezone('America/Punta_Arenas')
     ahora_chile = datetime.now(tz_chile)
-    
-    # 3. USAR LA HORA CHILENA PARA LOS CÁLCULOS
-    fecha_hoy = ahora_chile.strftime('%Y-%m-%d')
+
+    fecha_hoy    = ahora_chile.strftime('%Y-%m-%d')
     fecha_manana = (ahora_chile + timedelta(days=1)).strftime('%Y-%m-%d')
-    
-    # Consulta (La misma lógica de madrugada que ya aprobamos)
-    sql = f"""
-        SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
-        FROM {tabla}
-        WHERE fecha = %s
-           OR (fecha = %s AND hora <= '04:00:00')
-        ORDER BY fecha ASC, hora ASC
-    """
-    
-    cur.execute(sql, (fecha_hoy, fecha_manana))
+
+    # FILTRO: mostrar desde 2 horas antes de la hora actual
+    hace_dos_horas = ahora_chile - timedelta(hours=2)
+    fecha_limite   = hace_dos_horas.strftime('%Y-%m-%d')
+    hora_limite    = hace_dos_horas.strftime('%H:%M:%S')
+
+    # Si hace 2 horas era ayer (madrugada 00:00-01:59), mostramos todo el día sin filtrar hora
+    if fecha_limite < fecha_hoy:
+        sql = f"""
+            SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
+            FROM {tabla}
+            WHERE fecha = %s
+               OR (fecha = %s AND hora <= '04:00:00')
+            ORDER BY fecha ASC, hora ASC
+        """
+        cur.execute(sql, (fecha_hoy, fecha_manana))
+    else:
+        # Caso normal: hoy desde hora_limite en adelante + madrugada de mañana
+        sql = f"""
+            SELECT id, hora, empresa_nombre, lugar, anden, fecha, estado 
+            FROM {tabla}
+            WHERE (fecha = %s AND hora >= %s)
+               OR (fecha = %s AND hora <= '04:00:00')
+            ORDER BY fecha ASC, hora ASC
+        """
+        cur.execute(sql, (fecha_hoy, hora_limite, fecha_manana))
+
     datos = cur.fetchall()
-    
+
     cur.close()
     conn.close()
     return datos
